@@ -73,6 +73,10 @@ public class OmniTest extends LinearOpMode {
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
 
+    private DcMotor Intake = null;
+    private DcMotor Outtake = null;
+
+
     @Override
     public void runOpMode() {
 
@@ -82,6 +86,11 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+
+        /*
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Outtake = hardwareMap.get(DcMotor.class, "Outtake");
+         */
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -156,6 +165,23 @@ public class OmniTest extends LinearOpMode {
             RightFront.setPower(frontRightPower / 2);
             LeftBack.setPower(backLeftPower / 2);
             RightBack.setPower(backRightPower / 2);
+
+            /*
+            if(gamepad1.left_trigger > 0){
+                Intake.setPower(0.5);
+            }else{
+                Intake.setPower(0);
+            }
+
+            if(gamepad1.right_trigger > 0){
+                Outtake.setPower(0.5);
+            }else{
+                Outtake.setPower(0);
+            }
+
+             */
+
+
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());

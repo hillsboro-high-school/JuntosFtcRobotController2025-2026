@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import java.util.Objects;
+import java.util.Vector;
 
 @Autonomous(name="AutoTest", group="Linear OpMode")
 
@@ -47,6 +47,17 @@ public class AutoTest extends LinearOpMode {
     double OPcircumference = 2.0*Math.PI*(16.0/25.4);
 
     double curAngle;
+
+    double fieldX = 2*tileMatLength;
+    double fieldY = 2*tileMatLength;
+
+    double robotX = 0;
+    double robotY = 0;
+    double robotTheta = 0;
+
+    double targetX = tileMatLength;
+    double targetY = tileMatLength;
+    double targetTheta = 45;
 
     YawPitchRollAngles orientation;
     IMU imu;
@@ -112,24 +123,13 @@ public class AutoTest extends LinearOpMode {
             Sleep is used when testing, set to 0 for max time
 
              */
-            // MOVE CODE
-            localTargetTick = inchesToTicks(tileMatLength);
-            driveForward(localTargetTick, -0.5,1);
+            double distTarget = Math.sqrt((Math.pow(fieldX-targetX, 2))+(Math.pow(fieldY-targetY,2)));
+            turnRight(-0.5, Math.atan((targetY)/(targetX)), orientation, 1);
 
-            driveBackward(localTargetTick, -0.5, 1);
+            localTargetTick = inchesToTicks(distTarget);
+            driveForward(localTargetTick, -0.5, 1);
 
-            turnRight(-0.5, 90, orientation, 1);
-
-            turnLeft(-0.5, 90, orientation,1);
-
-            strafeLeft(localTargetTick, -0.5, 1);
-
-            strafeRight(localTargetTick, -0.5,1);
-
-
-            stopAllPower();
             break;
-
         }
     }
 
@@ -299,9 +299,9 @@ public class AutoTest extends LinearOpMode {
 
     public void setStrafingDrive(){
         FR.setDirection(DcMotorSimple.Direction.REVERSE);
-        FL.setDirection(DcMotorSimple.Direction.FORWARD);
+        FL.setDirection(DcMotorSimple.Direction.REVERSE);
         BR.setDirection(DcMotorSimple.Direction.FORWARD);
-        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BL.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
 
