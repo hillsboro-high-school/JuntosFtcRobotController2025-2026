@@ -1,0 +1,34 @@
+MEET 0:
+AUTONOMOUS:
+Shoot starting artifacts into depot WITHOUT camera
+Move out of launch zone
+
+TELE-OP:
+Driving and shooting WITHOUT camera
+
+MEET 1:
+AUTONOMOUS:
+Using camera to shoot artifacts into Motifs?
+    - Motifs need color sensor (software) /sorting mechanism (hardware)
+Using way-point to get the correct motif artifact
+Collecting ATLEAST 3 more artifacts + Shoot
+
+TELE-OP:
+Using camera to shoot
+-One button aligns robot with depot and shoots all the 3 artifacts
+-Motif if possible
+
+MEET 2:
+AUTONOMOUS:
+Motifs every time
+Camera fully operational (See all april tags)
+FASTER CYCLE - Getting more artifacts
+Gather artifacts from human player - if there is enough time
+
+TELE-OP:
+Improved tele-op from meet 1
+
+
+
+
+

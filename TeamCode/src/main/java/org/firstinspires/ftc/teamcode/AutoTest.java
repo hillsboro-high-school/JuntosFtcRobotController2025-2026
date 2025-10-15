@@ -14,6 +14,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 @Autonomous(name="AutoTest", group="Linear OpMode")
 
@@ -123,8 +125,25 @@ public class AutoTest extends LinearOpMode {
             Sleep is used when testing, set to 0 for max time
 
              */
-            double distTarget = Math.sqrt((Math.pow(fieldX-targetX, 2))+(Math.pow(fieldY-targetY,2)));
-            turnRight(-0.5, Math.atan((targetY)/(targetX)), orientation, 1);
+            // (0,0), (1,1), (0,1)
+            double distTarget = Math.sqrt((Math.pow(targetX-robotX, 2))+(Math.pow(targetY-robotY,2)));
+
+            targetTheta = Math.atan((targetY-robotY)/(targetX-robotX));
+            turnRight(-0.5, Math.toDegrees(targetTheta), orientation, 1);
+
+            localTargetTick = inchesToTicks(distTarget);
+            driveForward(localTargetTick, -0.5, 1);
+
+            robotX = tileMatLength;
+            robotY = tileMatLength;
+            robotTheta = targetTheta;
+
+            targetX = 0;
+            targetY = tileMatLength;
+
+            distTarget = Math.sqrt((Math.pow(targetX-robotX, 2))+(Math.pow(targetY-robotY,2)));
+            targetTheta = Math.PI - Math.atan((targetY-robotY)/(targetX-robotX));
+            turnLeft(-0.5, Math.toDegrees(targetTheta-robotTheta), orientation, 1);
 
             localTargetTick = inchesToTicks(distTarget);
             driveForward(localTargetTick, -0.5, 1);
