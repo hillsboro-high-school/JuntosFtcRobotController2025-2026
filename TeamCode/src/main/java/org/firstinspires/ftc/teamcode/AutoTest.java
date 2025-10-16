@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class AutoTest extends LinearOpMode {
     private boolean rightStop = false;
     private boolean leftStop = false;
 
-    private double tileMatLength = 12*2;  // Inches
+    private int tileMatLength = 12*2;  // Inches
 
     double localTargetTick;
 
@@ -53,13 +54,10 @@ public class AutoTest extends LinearOpMode {
     double fieldX = 2*tileMatLength;
     double fieldY = 2*tileMatLength;
 
-    double robotX = 0;
-    double robotY = 0;
+    int robotX = 0;
+    int robotY = 0;
     double robotTheta = 0;
-
-    double targetX = tileMatLength;
-    double targetY = tileMatLength;
-    double targetTheta = 45;
+    double targetTheta;
 
     YawPitchRollAngles orientation;
     IMU imu;
@@ -125,7 +123,21 @@ public class AutoTest extends LinearOpMode {
             Sleep is used when testing, set to 0 for max time
 
              */
-            // (0,0), (1,1), (0,1)
+            // (0,0,0), (1,1), (0,1)
+
+
+            ArrayList<ArrayList<Integer>> coordinates = new ArrayList<ArrayList<Integer>>();
+
+            coordinates.add(0, new ArrayList<Integer>(Arrays.asList(0, tileMatLength, 0)));  // Coordinates are the last two numbers
+            coordinates.add(1, new ArrayList<Integer>(Arrays.asList(tileMatLength, tileMatLength, 0))); // (x, y)
+            coordinates.add(2, new ArrayList<Integer>(Arrays.asList(0, 0, 0)));
+
+            for(int i=0; i<coordinates.size(); i++){
+                wayPoint(coordinates.get(i).get(0), coordinates.get(i).get(1), robotX, robotY, coordinates.get(i).get(2), orientation);
+            }
+
+
+            /*
             double distTarget = Math.sqrt((Math.pow(targetX-robotX, 2))+(Math.pow(targetY-robotY,2)));
 
             targetTheta = Math.atan((targetY-robotY)/(targetX-robotX));
@@ -148,10 +160,22 @@ public class AutoTest extends LinearOpMode {
             localTargetTick = inchesToTicks(distTarget);
             driveForward(localTargetTick, -0.5, 1);
 
+             */
+
             break;
         }
     }
 
+    public void wayPoint(int targetX, int targetY, int robotX, int robotY, int shoot, YawPitchRollAngles orientation){
+        double distTarget = Math.sqrt((Math.pow(targetX-robotX, 2))+(Math.pow(targetY-robotY,2)));
+
+        targetTheta = Math.atan((double)(targetY-robotY)/(double)(targetX-robotX));
+        // check to turn right or left
+        turnRight(-0.5, Math.toDegrees(targetTheta), orientation, 1);
+
+        localTargetTick = inchesToTicks(distTarget);
+        driveForward(localTargetTick, -0.5, 1);
+    }
 
     public void driveForward(double targetTicks, double power, long sleep) {
         resetTicks();
@@ -307,6 +331,8 @@ public class AutoTest extends LinearOpMode {
 
         //telemIMUOrientation(orientation, yaw);
     }
+
+
 
 
     public void setNormalDrive(){
