@@ -58,6 +58,7 @@ public class AutoTest extends LinearOpMode {
     int robotY = 0;
     double robotTheta = 0;
     double targetTheta;
+    double calcTheta;
 
     YawPitchRollAngles orientation;
     IMU imu;
@@ -131,9 +132,14 @@ public class AutoTest extends LinearOpMode {
             coordinates.add(0, new ArrayList<Integer>(Arrays.asList(0, tileMatLength, 0)));  // Coordinates are the last two numbers
             coordinates.add(1, new ArrayList<Integer>(Arrays.asList(tileMatLength, tileMatLength, 0))); // (x, y)
             coordinates.add(2, new ArrayList<Integer>(Arrays.asList(0, 0, 0)));
+            coordinates.add(3, new ArrayList<Integer>(Arrays.asList(tileMatLength, 0, 0)));
+            coordinates.add(4, new ArrayList<Integer>(Arrays.asList(0, tileMatLength, 0)));
+            coordinates.add(5, new ArrayList<Integer>(Arrays.asList(0, 0, 0)));
 
             for(int i=0; i<coordinates.size(); i++){
-                wayPoint(coordinates.get(i).get(0), coordinates.get(i).get(1), robotX, robotY, coordinates.get(i).get(2), orientation);
+                robotTheta=wayPoint(coordinates.get(i).get(0), coordinates.get(i).get(1), robotX, robotY, coordinates.get(i).get(2), robotTheta, orientation);
+                robotX = coordinates.get(i).get(0);
+                robotY = coordinates.get(i).get(1);
             }
 
 
@@ -166,15 +172,37 @@ public class AutoTest extends LinearOpMode {
         }
     }
 
-    public void wayPoint(int targetX, int targetY, int robotX, int robotY, int shoot, YawPitchRollAngles orientation){
+    public double wayPoint(int targetX, int targetY, int robotX, int robotY, int shoot, double robotTheta, YawPitchRollAngles orientation){
         double distTarget = Math.sqrt((Math.pow(targetX-robotX, 2))+(Math.pow(targetY-robotY,2)));
 
-        targetTheta = Math.atan((double)(targetY-robotY)/(double)(targetX-robotX));
-        // check to turn right or left
-        turnRight(-0.5, Math.toDegrees(targetTheta), orientation, 1);
+        calcTheta = Math.toDegrees(Math.atan((double)(targetY-robotY)/(double)(targetX-robotX)))-robotTheta;
+
+        if (calcTheta < 0){
+            calcTheta += 360;
+        }
+
+        telemetry.addData("CalcTheta", calcTheta);
+        telemetry.update();
+        sleep(2000);
+
+        if (calcTheta <= 90){
+            targetTheta = 90-calcTheta;
+            turnRight(-0.5, targetTheta, orientation, 1);
+        } else if(calcTheta >= 270){
+            targetTheta = (360-calcTheta)+90;
+            turnRight(-0.5, targetTheta, orientation, 1);
+        } else if(calcTheta > 90 && calcTheta <=180){
+            targetTheta = calcTheta-90;
+            turnLeft(-0.5, targetTheta, orientation, 1);
+        } else{
+            targetTheta = calcTheta-180;
+            turnLeft(-0.5, targetTheta, orientation, 1);
+        }
 
         localTargetTick = inchesToTicks(distTarget);
         driveForward(localTargetTick, -0.5, 1);
+
+        return targetTheta;
     }
 
     public void driveForward(double targetTicks, double power, long sleep) {
@@ -316,6 +344,7 @@ public class AutoTest extends LinearOpMode {
         while(yaw > targetAngle){
             orientation = imu.getRobotYawPitchRollAngles();
             yaw = orientation.getYaw();
+
 
             telemetry.addData("Yaw", yaw);
             telemetry.addData("Target", targetAngle);
