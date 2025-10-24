@@ -47,7 +47,7 @@ public class AutoTest extends LinearOpMode {
 
     // Calculates the circumference for the Odometry pods
     // Divides by 25.4 to change mm to inches
-    double OPcircumference = 2.0*Math.PI*(16.0/25.4);
+    double OPcircumference = 2.0*Math.PI*(24.0/25.4);
 
     double curAngle;
 
@@ -192,12 +192,13 @@ public class AutoTest extends LinearOpMode {
             targetTheta = (360-calcTheta)+90;
             turnRight(-0.5, targetTheta, orientation, 1);
         } else if(calcTheta > 90 && calcTheta <=180){
-            targetTheta = calcTheta-90;
+            targetTheta = calcTheta-45;
             turnLeft(-0.5, targetTheta, orientation, 1);
         } else{
-            targetTheta = calcTheta-180;
+            targetTheta = calcTheta-90;
             turnLeft(-0.5, targetTheta, orientation, 1);
         }
+        // TURN LEFT CODE IS BUGGED - Idea: Change +=360 to 180 and change math of -45 and -90.
 
         localTargetTick = inchesToTicks(distTarget);
         driveForward(localTargetTick, -0.5, 1);
