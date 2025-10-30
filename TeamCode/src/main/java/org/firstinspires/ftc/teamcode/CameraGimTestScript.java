@@ -226,7 +226,7 @@ public class CameraGimTestScript extends LinearOpMode {
             }
         }   // end for() loop
 
-        // Tell Driver the current motif
+        // Tell Driver the current Motif
             telemetry.addLine("Current Motif:");
             if (CurrentMotifID == 21) {
                 telemetry.addLine("Green Purple Purple");
