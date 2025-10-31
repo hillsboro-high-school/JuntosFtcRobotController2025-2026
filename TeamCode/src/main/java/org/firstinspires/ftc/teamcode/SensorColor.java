@@ -214,7 +214,29 @@ public class SensorColor extends LinearOpMode {
         telemetry.addData("Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
       }
 
+      /*
+      //I copied this all from Discord, so hopefully it works
+      double[] empty = {64, 80, 99};//64,80,99 //74,120,120
+      double[] red = {724, 158, 340};//724,158,340 //896,170, 407
+      double[] blue = {126, 582, 240};//126,582,240 //179, 867, 365
+      double[] yellow = {1018, 277, 1193}; //1018,227,1193 //1386, 363 1724
+
+      double deltaE = Math.sqrt((Math.pow(empty[0] - colorSensor.red(),2) + (Math.pow(empty[1] - colorSensor.blue(),2)) + (Math.pow(empty[2] - colorSensor.green(), 2))));
+      double deltaR = Math.sqrt((Math.pow(red[0] - colorSensor.red(),2) + (Math.pow(red[1] - colorSensor.blue(),2)) + (Math.pow(red[2] - colorSensor.green(),2))));
+      double deltaB = Math.sqrt((Math.pow(blue[0] - colorSensor.red(),2) + (Math.pow(blue[1] - colorSensor.blue(),2) + (Math.pow(blue[2] - colorSensor.green(),2)))));
+      double deltaY = Math.sqrt((Math.pow(yellow[0] - colorSensor.red(),2) + (Math.pow(yellow[1] - colorSensor.blue(),2) + (Math.pow(yellow[2] - colorSensor.green(),2)))));
+
+      double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
+      double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
+      double blueConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))) + (1/(deltaB + deltaY)));
+      double yellowConfidence = 1 - (deltaY/3)*((1 / (deltaY + deltaE)) + (1/((deltaY + deltaE))) + (1/(deltaY + deltaE)));
+      double[] confidenceValues = {emptyConfidence,redConfidence,blueConfidence,yellowConfidence};
+      double largestConfidence = findLargest(confidenceValues);
+      */
+
       telemetry.update();
+
+
 
       // Change the Robot Controller's background color to match the color detected by the color sensor.
       relativeLayout.post(new Runnable() {
