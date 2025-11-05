@@ -161,10 +161,18 @@ public class OmniTest extends LinearOpMode {
             */
 
             // Send calculated power to wheels
-            LeftFront.setPower(frontLeftPower / 2);
-            RightFront.setPower(frontRightPower / 2);
-            LeftBack.setPower(backLeftPower / 2);
-            RightBack.setPower(backRightPower / 2);
+            // Holding A makes the robot move slower so it can park easier
+            if(gamepad1.a) {
+                LeftFront.setPower(frontLeftPower / 3);
+                RightFront.setPower(frontRightPower / 3);
+                LeftBack.setPower(backLeftPower / 3);
+                RightBack.setPower(backRightPower / 3);
+            } else {
+                LeftFront.setPower(frontLeftPower / 2);
+                RightFront.setPower(frontRightPower / 2);
+                LeftBack.setPower(backLeftPower / 2);
+                RightBack.setPower(backRightPower / 2);
+            }
 
             /*
             if(gamepad1.left_trigger > 0){

@@ -29,18 +29,19 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import com.qualcomm.robotcore.hardware.CRServo;
 
 import java.util.List;
-import java.util.Vector;
 
 /*
  * This OpMode illustrates the basics of AprilTag recognition and pose estimation, using
@@ -63,27 +64,14 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@TeleOp(name = "Concept: AprilTag Easy", group = "Concept")
-
-public class CameraGimTestScript extends LinearOpMode {
+@TeleOp(name = "Concept: Cool AprilTag Easy", group = "Concept")
+//@Disabled
+public class ConceptAprilTagEZ extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
-    private Servo XServo = null;
-    private Servo YServo = null;
-
-    private Vector<Double> previous = new Vector<>(3);
-
-    private Vector<Double> current = new Vector<>(3);
-    private int ScanPos = 0;
-
-    private boolean TagFound = false;
-    private double ServoPos = 0;
-
-    private int CurrentMotifID = 0;
-
-
-
-
+    private CRServo BSpeed = null;
+    private boolean SeeAprilTag = false;
+    private double CurrentX = 0;
     /**
      * The variable to store our instance of the AprilTag processor.
      */
@@ -97,23 +85,13 @@ public class CameraGimTestScript extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        StartVector(previous, 0, 0, 0);
-
-        StartVector(current, 0, 0, 0);
-//
- //        XServo = hardwareMap.get(Servo.class, "x_servo");
-//        YServo = hardwareMap.get(Servo.class, "y_servo");
-//
         initAprilTag();
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
 
-        telemetry.update();
-
-
-
+        BSpeed = hardwareMap.get(CRServo.class, "xServo");
 
         waitForStart();
 
@@ -131,47 +109,40 @@ public class CameraGimTestScript extends LinearOpMode {
                 } else if (gamepad1.dpad_up) {
                     visionPortal.resumeStreaming();
                 }
+                //Check camera data
+                List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+                telemetry.addData("# AprilTags Detected", currentDetections.size());
+                //get detection
+                /*
+                if (detection == null) {
+                   SeeAprilTag = false;
+                }
+                else {
+                   SeeAprilTag = true;
+                }
+                */
+                //Code
+                telemetry.addData("X", CurrentX);
+                if (SeeAprilTag) {
 
+                    double difference = Math.abs(CurrentX / 200);
 
- //               if(gamepad1.a){
- //                   XServo.setPosition(0);
- //               }
- //               if(gamepad1.b){
- //                   XServo.setPosition(1);
-  //              }
-                /*if(TagFound){
-                    double DeltaX = 0 - (double)current.get(0);
-                    double DeltaY = (double)current.get(1);
-
-                    double DeltaA = Math.atan(DeltaX/DeltaY);
-                    if(DeltaX < 0){
-                        DeltaA += Math.PI;
+                    if (CurrentX > 3){
+                        BSpeed.setPower(0.075 + difference);
+                    }else if (CurrentX < -3){
+                        BSpeed.setPower(-0.075 - difference);
+                    }
+                    else{
+                        BSpeed.setPower(0);
                     }
 
-                    double ServoA = DeltaA / (2*Math.PI);
-
-                    ServoPos = XServo.getPosition();
-
-                    if(ServoPos + ServoA > 1){
-                        ServoPos -= 1;
-                    }else if(ServoPos + ServoA < 0){
-                        ServoPos += 1;
-                    }
-
-                    XServo.setPosition(ServoPos + ServoA);
-
-                    previous = current;
-                }else{
-                    XServo.setPosition(ScanPos);
-                    if(XServo.getPosition() == 0){
-                        ScanPos = 1;
-                    }else if(XServo.getPosition() == 1){
-                        ScanPos = 0;
-                    }
-                }*/
-
-
+                }
+                else {
+                    BSpeed.setPower(0);
+                }
+                telemetry.addData("ServoSpeed", BSpeed.getPower());
                 // Share the CPU.
+                telemetry.update();
                 sleep(20);
             }
         }
@@ -192,10 +163,10 @@ public class CameraGimTestScript extends LinearOpMode {
         // Create the vision portal the easy way.
         if (USE_WEBCAM) {
             visionPortal = VisionPortal.easyCreateWithDefaults(
-                    hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
+                hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
         } else {
             visionPortal = VisionPortal.easyCreateWithDefaults(
-                    BuiltinCameraDirection.BACK, aprilTag);
+                BuiltinCameraDirection.BACK, aprilTag);
         }
 
     }   // end method initAprilTag()
@@ -208,55 +179,29 @@ public class CameraGimTestScript extends LinearOpMode {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
-        TagFound = !currentDetections.isEmpty();
+        SeeAprilTag = !currentDetections.isEmpty();
 
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
-
-                SetVector(current, detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
-                CurrentMotifID = detection.id;
-                telemetry.addLine(String.format("\n==== (ID %d) %s", CurrentMotifID, detection.metadata.name));
+                CurrentX = detection.ftcPose.x;
+                /*telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+
+               telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+                 */
             } else {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
 
-        // Tell Driver the current motif
-            telemetry.addLine("Current Motif:");
-            if (CurrentMotifID == 21) {
-                telemetry.addLine("Green Purple Purple");
-            } else if (CurrentMotifID == 22) {
-                telemetry.addLine("Purple Green Purple");
-            } else if (CurrentMotifID == 23) {
-                telemetry.addLine("Purple Purple Green");
-            } else {
-                telemetry.addLine("Unknown");
-            }
-
-
-    // Add "key" information to telemetry
+        // Add "key" information to telemetry
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
 
     }   // end method telemetryAprilTag()
 
-
-    public void SetVector(Vector vector, double X, double Y, double Z)
-    {
-        vector.set(0, X);
-        vector.set(1, Y);
-        vector.set(2, Z);
-    }
-
-    public void StartVector(Vector vector, double X, double Y, double Z){
-        vector.add(X);
-        vector.add(Y);
-        vector.add(Z);
-    }
 }   // end class
