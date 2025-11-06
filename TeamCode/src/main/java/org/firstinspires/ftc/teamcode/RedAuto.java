@@ -18,9 +18,8 @@ import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-@Autonomous(name="AutoTest", group="Linear OpMode")
-
-public class AutoTest extends LinearOpMode {
+@Autonomous(name="RedAuto", group="Linear OpMode")
+public class RedAuto extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -54,7 +53,7 @@ public class AutoTest extends LinearOpMode {
     double fieldX = 2*tileMatLength;
     double fieldY = 2*tileMatLength;
 
-    int robotX = 0;
+    int robotX = 2*tileMatLength;
     int robotY = 0;
     double robotTheta = 90;
     double targetTheta;
@@ -122,25 +121,23 @@ public class AutoTest extends LinearOpMode {
             /*
             ALL POWER MUST BE NEGATIVE
             Sleep is used when testing, set to 0 for max time
-            */
+
+             */
+            // (0,0,0), (1,1), (0,1)
 
 
             ArrayList<ArrayList<Integer>> coordinates = new ArrayList<ArrayList<Integer>>();
 
-            coordinates.add(0, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, 0, 0)));  // Coordinates are the last two numbers
-            coordinates.add(1, new ArrayList<Integer>(Arrays.asList(0, tileMatLength, 0))); // (x, y)
+            coordinates.add(0, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, 2*tileMatLength, 0)));
+            coordinates.add(1, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, tileMatLength, 0))); // (x, y) last num is for shooting
             coordinates.add(2, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, 2*tileMatLength, 0)));
-            coordinates.add(3, new ArrayList<Integer>(Arrays.asList(0, 0, 0)));
-            coordinates.add(4, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, tileMatLength, 0)));
-            coordinates.add(5, new ArrayList<Integer>(Arrays.asList(0, 2*tileMatLength, 0)));
+            coordinates.add(3, new ArrayList<Integer>(Arrays.asList(2*tileMatLength, tileMatLength, 0)));
 
             for(int i=0; i<coordinates.size(); i++){
                 robotTheta=wayPoint(coordinates.get(i).get(0), coordinates.get(i).get(1), robotX, robotY, coordinates.get(i).get(2), robotTheta, orientation);
                 robotX = coordinates.get(i).get(0);
                 robotY = coordinates.get(i).get(1);
             }
-
-
 
 
             /*
@@ -180,42 +177,26 @@ public class AutoTest extends LinearOpMode {
 
         telemetry.addData("CalcTheta", calcTheta);
         telemetry.update();
-        sleep(2000);
+        sleep(5000);
 
 
-        if (calcTheta > 0){
-            if (calcTheta >= 180){
-                turnLeft(-0.5, calcTheta/2, orientation, 0);
-                turnLeft(-0.5, calcTheta/2, orientation, 1);
-            }else {
-                turnLeft(-0.5, calcTheta, orientation, 1);
-            }
-        } else{
-            if (calcTheta <= -180){
-                turnRight(-0.5, Math.abs(calcTheta/2), orientation, 0);
-                turnRight(-0.5, Math.abs(calcTheta/2), orientation, 1);
-            } else {
-                turnRight(-0.5, Math.abs(calcTheta), orientation, 1);
+        if (calcTheta != 0){
+            if (calcTheta > 0){
+                if (calcTheta >= 180){
+                    turnLeft(-0.5, calcTheta/2, orientation, 0);
+                    turnLeft(-0.5, calcTheta/2, orientation, 1);
+                }else {
+                    turnLeft(-0.5, calcTheta, orientation, 1);
+                }
+            } else{
+                if (calcTheta <= -180){
+                    turnRight(-0.5, Math.abs(calcTheta/2), orientation, 0);
+                    turnRight(-0.5, Math.abs(calcTheta/2), orientation, 1);
+                } else {
+                    turnRight(-0.5, Math.abs(calcTheta), orientation, 1);
+                }
             }
         }
-
-
-        /*
-        if (calcTheta <= 90){
-            targetTheta = 90-calcTheta;
-            turnRight(-0.5, targetTheta, orientation, 1);
-        } else if(calcTheta >= 270){
-            targetTheta = (360-calcTheta)+90;
-            turnRight(-0.5, targetTheta, orientation, 1);
-        } else if(calcTheta > 90 && calcTheta <=180){
-            targetTheta = calcTheta-45;
-            turnLeft(-0.5, targetTheta, orientation, 1);
-        } else{
-            targetTheta = calcTheta-90;
-            turnLeft(-0.5, targetTheta, orientation, 1);
-        }
-
-         */
 
         localTargetTick = inchesToTicks(distTarget);
         driveForward(localTargetTick, -0.5, 1);
@@ -519,3 +500,4 @@ public class AutoTest extends LinearOpMode {
         return tick;
     }
 }
+

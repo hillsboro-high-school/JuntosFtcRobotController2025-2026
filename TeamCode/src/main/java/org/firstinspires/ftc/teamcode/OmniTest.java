@@ -31,8 +31,11 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.nio.channels.Pipe;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -76,6 +79,22 @@ public class OmniTest extends LinearOpMode {
     private DcMotor Intake = null;
     private DcMotor Outtake = null;
 
+    ColorSensor colorSensor = null;
+    String allianceColor;
+
+    double purpleR = 1965;
+    double purpleG = 3770;
+    double purpleB = 2230;
+
+    double greenR = 860;
+    double greenG = 2605;
+    double greenB = 3900;
+
+    int emptyR =164;
+    int emptyG = 137;
+    int emptyB = 220;
+
+
 
     @Override
     public void runOpMode() {
@@ -86,6 +105,9 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+
+        colorSensor = hardwareMap.get(ColorSensor.class, "color_sensor");
+
 
         /*
         Intake = hardwareMap.get(DcMotor.class, "Intake");
@@ -161,18 +183,10 @@ public class OmniTest extends LinearOpMode {
             */
 
             // Send calculated power to wheels
-            // Holding A makes the robot move slower so it can park easier
-            if(gamepad1.a) {
-                LeftFront.setPower(frontLeftPower / 3);
-                RightFront.setPower(frontRightPower / 3);
-                LeftBack.setPower(backLeftPower / 3);
-                RightBack.setPower(backRightPower / 3);
-            } else {
-                LeftFront.setPower(frontLeftPower / 2);
-                RightFront.setPower(frontRightPower / 2);
-                LeftBack.setPower(backLeftPower / 2);
-                RightBack.setPower(backRightPower / 2);
-            }
+            LeftFront.setPower(frontLeftPower / 2);
+            RightFront.setPower(frontRightPower / 2);
+            LeftBack.setPower(backLeftPower / 2);
+            RightBack.setPower(backRightPower / 2);
 
             /*
             if(gamepad1.left_trigger > 0){
@@ -188,13 +202,71 @@ public class OmniTest extends LinearOpMode {
             }
 
              */
+            telemetry.addData("COLOR", sampleColors());
+            telemetry.update();
 
 
 
-            // Show the elapsed game time and wheel power.
+            /* Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
             telemetry.update();
+
+             */
         }
-    }}
+    }
+    public String sampleColors(){
+        int inputRed = colorSensor.red();
+        int inputGreen = colorSensor.green();
+        int inputBlue = colorSensor.blue();
+
+        double PI;
+        double GI;
+        double EI;
+
+        double Cpg;
+        double Cpe;
+
+        double Cgp;
+        double Cge;
+
+        double Cp;
+        double Cg;
+        double Ce;
+
+        PI = Math.sqrt( Math.pow((inputRed-purpleR), 2) + Math.pow((inputGreen-purpleG), 2) + Math.pow((inputBlue-purpleB), 2) );
+        GI = Math.sqrt( Math.pow((inputRed-greenR), 2) + Math.pow((inputGreen-greenG), 2) + Math.pow((inputBlue-greenB), 2) );
+        EI = Math.sqrt( Math.pow((inputRed-emptyR), 2) + Math.pow((inputGreen-emptyG), 2) + Math.pow((inputBlue-emptyB), 2) );
+
+        Cpg = 1 - (PI/(PI+GI));
+        Cpe = 1 - (PI/(PI+EI));
+
+        Cgp = 1 - (GI/(GI+PI));
+        Cge = 1 - (GI/(GI+EI));
+
+        Cp = (Cpg+Cpe)/2;
+        Cg = (Cgp+Cge)/2;
+        Ce = ((1-Cpe)+(1-Cge))/2;
+
+        telemetry.addData("RED", colorSensor.red());
+        telemetry.addData("BLUE", colorSensor.blue());
+        telemetry.addData("GREEN", colorSensor.green());
+
+        telemetry.addData("PURPLE", Cp);
+        telemetry.addData("GREEN", Cg);
+        telemetry.addData("EMPTY", Ce);
+        telemetry.update();
+
+
+        if(Cp > Cg && Cp > Ce){
+            return "purple";
+        }
+        else if(Cg > Ce){
+            return "green";
+        }
+        else{
+            return "empty";
+        }
+    }
+}
