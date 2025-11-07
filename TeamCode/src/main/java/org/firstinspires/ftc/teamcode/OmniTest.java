@@ -73,6 +73,9 @@ public class OmniTest extends LinearOpMode {
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
 
+    private DcMotor intakeMotor = null;
+
+
     @Override
     public void runOpMode() {
 
@@ -82,6 +85,7 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -159,10 +163,25 @@ public class OmniTest extends LinearOpMode {
                 LeftBack.setPower(backLeftPower / 3);
                 RightBack.setPower(backRightPower / 3);
             } else {
-                LeftFront.setPower(frontLeftPower / 2);
-                RightFront.setPower(frontRightPower / 2);
-                LeftBack.setPower(backLeftPower / 2);
-                RightBack.setPower(backRightPower / 2);
+                LeftFront.setPower(frontLeftPower);
+                RightFront.setPower(frontRightPower);
+                LeftBack.setPower(backLeftPower);
+                RightBack.setPower(backRightPower);
+            }
+
+            //This stuff is for the intake motor
+            //this makes the intake motor pull in
+            if(gamepad1.right_trigger > 0){
+                intakeMotor.setPower(1);
+            }else{
+                intakeMotor.setPower(0);
+            }
+
+            //this makes the intake motor push out
+            if(gamepad1.left_trigger > 0){
+                intakeMotor.setPower(-1);
+            }else{
+                intakeMotor.setPower(0);
             }
 
             // Show the elapsed game time and wheel power.
