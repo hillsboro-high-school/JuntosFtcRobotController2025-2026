@@ -90,7 +90,7 @@ public class OmniTest extends LinearOpMode {
     double greenG = 2605;
     double greenB = 3900;
 
-    int emptyR =164;
+    int emptyR = 164;
     int emptyG = 137;
     int emptyB = 220;
 

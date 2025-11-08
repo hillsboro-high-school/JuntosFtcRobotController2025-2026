@@ -346,6 +346,10 @@ public class AutoTest extends LinearOpMode {
             //telemIMUOrientation(orientation, yaw);
         }
 
+        if (yaw > targetAngle+3) {
+            turnRight(power, targetAngle, orientation, 0);
+        }
+
         stopAllPower();
         resetTicks();
         imu.resetYaw();
@@ -382,6 +386,9 @@ public class AutoTest extends LinearOpMode {
             telemetry.addData("Target", targetAngle);
             telemetry.update();
             //telemIMUOrientation(orientation, yaw);
+        }
+        if (yaw < (-targetAngle)-3) {
+            turnLeft(power, targetAngle, orientation, 0);
         }
 
         stopAllPower();
@@ -464,7 +471,7 @@ public class AutoTest extends LinearOpMode {
     }
 
     public double getRightTicks(){
-        return -(rightEncoderMotor.getCurrentPosition() - rightEncoderPos);
+        return rightEncoderMotor.getCurrentPosition() - rightEncoderPos;
     }
 
     public void resetCenterTicks(){
