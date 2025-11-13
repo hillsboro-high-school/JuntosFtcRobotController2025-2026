@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -70,10 +71,14 @@ public class OmniTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor LeftFront = null;
     private DcMotor LeftBack = null;
-    private DcMotor RightFront = null;
+    private DcMotor RightFront = null; 
     private DcMotor RightBack = null;
 
     private DcMotor intakeMotor = null;
+
+    private DcMotor storage = null;
+
+    private DcMotorEx launcher = null;
 
 
     @Override
@@ -86,7 +91,8 @@ public class OmniTest extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
-
+        storage = hardwareMap.get(DcMotor.class, "storage");
+        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -101,6 +107,9 @@ public class OmniTest extends LinearOpMode {
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.REVERSE);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
+
+        launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -171,17 +180,29 @@ public class OmniTest extends LinearOpMode {
 
             //This stuff is for the intake motor
             //this makes the intake motor pull in
-            if(gamepad1.right_trigger > 0){
+            if(gamepad1.left_trigger > 0){
                 intakeMotor.setPower(1);
             }else{
                 intakeMotor.setPower(0);
             }
 
-            //this makes the intake motor push out
-            if(gamepad1.left_trigger > 0){
-                intakeMotor.setPower(-1);
+
+            //This is for stoarge and laucnher
+            if(gamepad1.b){
+                launcher.setVelocity(1620);
+                telemetry.addData("velocity", launcher.getVelocity());
+                telemetry.update();
+                if (launcher.getVelocity() >= 1620){
+                    gamepad1.rumble(500);
+                }
+            }else {
+                launcher.setVelocity(0);
+            }
+
+            if(gamepad1.y){
+                storage.setPower(1);
             }else{
-                intakeMotor.setPower(0);
+                storage.setPower(0);
             }
 
             // Show the elapsed game time and wheel power.

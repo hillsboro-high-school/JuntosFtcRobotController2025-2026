@@ -79,7 +79,6 @@ public class CameraGimTestScript extends LinearOpMode {
     private boolean TagFound = false;
     private double ServoPos = 0;
 
-    private int CurrentMotifID = 0;
 
 
 
@@ -215,8 +214,8 @@ public class CameraGimTestScript extends LinearOpMode {
             if (detection.metadata != null) {
 
                 SetVector(current, detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
-                CurrentMotifID = detection.id;
-                telemetry.addLine(String.format("\n==== (ID %d) %s", CurrentMotifID, detection.metadata.name));
+
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
@@ -226,20 +225,7 @@ public class CameraGimTestScript extends LinearOpMode {
             }
         }   // end for() loop
 
-        // Tell Driver the current motif
-            telemetry.addLine("Current Motif:");
-            if (CurrentMotifID == 21) {
-                telemetry.addLine("Green Purple Purple");
-            } else if (CurrentMotifID == 22) {
-                telemetry.addLine("Purple Green Purple");
-            } else if (CurrentMotifID == 23) {
-                telemetry.addLine("Purple Purple Green");
-            } else {
-                telemetry.addLine("Unknown");
-            }
-
-
-    // Add "key" information to telemetry
+        // Add "key" information to telemetry
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
