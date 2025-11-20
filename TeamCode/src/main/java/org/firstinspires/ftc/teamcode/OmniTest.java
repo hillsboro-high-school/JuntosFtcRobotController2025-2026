@@ -31,8 +31,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -80,6 +82,8 @@ public class OmniTest extends LinearOpMode {
 
     private DcMotorEx launcher = null;
 
+    private CRServo assistantServo = null;
+
 
     @Override
     public void runOpMode() {
@@ -90,9 +94,12 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
         storage = hardwareMap.get(DcMotor.class, "storage");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
+
+        assistantServo = hardwareMap.get(CRServo.class, "assistantServo");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -186,23 +193,22 @@ public class OmniTest extends LinearOpMode {
                 intakeMotor.setPower(0);
             }
 
-
-            //This is for stoarge and laucnher
-            if(gamepad1.b){
-                launcher.setVelocity(1620);
-                telemetry.addData("velocity", launcher.getVelocity());
-                telemetry.update();
-                if (launcher.getVelocity() >= 1620){
-                    gamepad1.rumble(500);
-                }
+            if(gamepad1.right_trigger > 0){
+                launcher.setPower(1);
             }else {
-                launcher.setVelocity(0);
+                launcher.setPower(0);
             }
 
-            if(gamepad1.y){
+            if(gamepad1.right_bumper){
                 storage.setPower(1);
             }else{
                 storage.setPower(0);
+            }
+
+            if(gamepad1.left_bumper){
+                assistantServo.setPower(1);
+            }else{
+                assistantServo.setPower(0);
             }
 
             // Show the elapsed game time and wheel power.
