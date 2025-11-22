@@ -47,8 +47,8 @@ public class BlueAuto extends LinearOpMode {
     private boolean rightStop = false;
     private boolean leftStop = false;
 
-    private int tileMatLength = 12*2;  // Inches
-    private int halfeTileMat = 6*2;  // Inches
+    private int tileMatLength = 24;  // Inches
+    private int halfeTileMat = 12;  // Inches
 
 
     double localTargetTick;
@@ -142,10 +142,12 @@ public class BlueAuto extends LinearOpMode {
 
             List<List<Double>> coordinates = new ArrayList<List<Double>>();
 
-            append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);
-            append(coordinates, tileMatLength, 7 * halfeTileMat, 0);
-            append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);
-            append(coordinates, tileMatLength, 5 * halfeTileMat, 0);
+            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
+            append(coordinates, halfeTileMat, 7 * halfeTileMat, 0);
+            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
+            append(coordinates, halfeTileMat, 5 * halfeTileMat, 0);
+            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
+
 
             //ArrayList<ArrayList<Double>> coordinates = new ArrayList<ArrayList<Double>>();
 
@@ -191,7 +193,20 @@ public class BlueAuto extends LinearOpMode {
         localTargetTick = inchesToTicks(distTarget);
 
         intakeOn();
-        if (calcTheta != 180 && calcTheta != -180) {
+        // Check to drive backwards
+        if (Math.abs(calcTheta) >= 135 && Math.abs(calcTheta) <= 225) {
+
+                if (calcTheta < 0) {
+                    turnLeft(-0.5, Math.abs((calcTheta-180) / 2), orientation, 0);
+                    turnLeft(-0.5, Math.abs((calcTheta-180) / 2), orientation, 1);
+                } else {
+                    turnRight(-0.5, (calcTheta+180) / 2, orientation, 0);
+                    turnRight(-0.5, (calcTheta+180) / 2, orientation, 1);
+                }
+                driveBackward(localTargetTick, -0.5, 1);
+                robotTheta += calcTheta;
+
+        }else{
             if (calcTheta > 0) {
                 turnLeft(-0.5, calcTheta / 2, orientation, 0);
                 turnLeft(-0.5, calcTheta / 2, orientation, 1);
@@ -200,14 +215,10 @@ public class BlueAuto extends LinearOpMode {
                 turnRight(-0.5, Math.abs(calcTheta / 2), orientation, 1);
             }
             driveForward(localTargetTick, -0.5, 1);
-            robotTheta += calcTheta;
-        }else{
-            driveBackward(localTargetTick, -0.5, 1);
         }
         intakeOff();
 
         if (shoot == 1){
-
             double aprilTagAngle = Math.toDegrees(Math.atan2((aprilTagY-targetY), (aprilTagX-targetX))) - robotTheta;
 
             telemetry.addData("Atag calc", aprilTagAngle);
@@ -222,7 +233,6 @@ public class BlueAuto extends LinearOpMode {
                 turnRight(-0.5, Math.abs(aprilTagAngle / 2), orientation, 1);
             }
             robotTheta += aprilTagAngle;
-
 
             shoot();
         }
