@@ -15,6 +15,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 @Autonomous(name="BlueAuto", group="Linear OpMode")
 
@@ -28,6 +29,11 @@ public class BlueAuto extends LinearOpMode {
     private DcMotor BR = null;
     private DcMotor SM = null;
     private  DcMotor IM = null;
+
+    double FR_power = 0;
+    double FL_power = 0;
+    double BL_power = 0;
+    double BR_power = 0;
 
     private DcMotor storage = null;
 
@@ -57,18 +63,19 @@ public class BlueAuto extends LinearOpMode {
     // Divides by 25.4 to change mm to inches
     double OPcircumference = 2.0*Math.PI*(24.0/25.4);
 
-    double curAngle;
-
     double aprilTagX = halfeTileMat;
     double aprilTagY = 11*halfeTileMat;
-    //double aprilTagX = 0;
-    //double aprilTagY = 5*tileMatLength;
 
-    double robotX = halfeTileMat;
-    double robotY = 11*halfeTileMat;
-    double robotTheta = 135;
+    double robotX = 6*halfeTileMat;
+    double robotY = 2*halfeTileMat;
+    double robotTheta = 0;
     double targetTheta;
     double calcTheta;
+    Vector<Double> turnCalculations = new Vector<Double>(0);
+
+    double Kp = 2;
+    double Ki = 0.5;
+    double Kd = 0.5;
 
     YawPitchRollAngles orientation;
     IMU imu;
@@ -141,33 +148,156 @@ public class BlueAuto extends LinearOpMode {
             */
 
             List<List<Double>> coordinates = new ArrayList<List<Double>>();
-
-            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
-            append(coordinates, halfeTileMat, 7 * halfeTileMat, 0);
-            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
-            append(coordinates, halfeTileMat, 5 * halfeTileMat, 0);
-            append(coordinates, 5 * halfeTileMat, 5 * halfeTileMat, 1);
-
-
-            //ArrayList<ArrayList<Double>> coordinates = new ArrayList<ArrayList<Double>>();
-
-            //coordinates.add(0, new ArrayList<Double>(Arrays.asList((5/2)*tileMatLength, (7/2)*tileMatLength, 1)));  // Coordinates are the last two numbers
-            //coordinates.add(1, new ArrayList<Double>(Arrays.asList((1/2)*tileMatLength, (7/2)*tileMatLength, 0))); // (x, y)
-            //coordinates.add(2, new ArrayList<Double>(Arrays.asList((5/2)*tileMatLength, (7/2)*tileMatLength, 1)));
-            //coordinates.add(3, new ArrayList<Double>(Arrays.asList(tileMatLength, (5/2)*tileMatLength, 0)));
+            append(coordinates, 8 * halfeTileMat, 8 * halfeTileMat,  1);  // data1 = x
+            //append(coordinates, halfeTileMat, 7 * halfeTileMat, 0);             // data2 = y
+            //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);   // data3 = shoot
+            //append(coordinates, halfeTileMat, 5 * halfeTileMat, 0);             // 0 means don't shoot
+            //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);   // 1 means shoot | can be simplifies with camera
 
             for(int i=0; i<coordinates.size(); i++){
-                robotTheta=wayPoint(coordinates.get(i).get(0), coordinates.get(i).get(1), robotX, robotY, coordinates.get(i).get(2), robotTheta, orientation);
-                robotX = coordinates.get(i).get(0);
-                robotY = coordinates.get(i).get(1);
+                telemetry.addData("For loop", 1);
+                telemetry.update();
+                turnCalculations = TurnCalc(robotX, robotY, robotTheta, coordinates.get(i).get(0), coordinates.get(i).get(1), 90);
+                relativePower(turnCalculations.get(0), turnCalculations.get(1));
+                telemetry.addData("Motor1", FR_power);
+                telemetry.addData("Motor2", FL_power);
+                telemetry.addData("Motor3", BL_power);
+                telemetry.addData("Motor4", BR_power);
+                telemetry.update();
+                sleep(3000);
+                pidControl(turnCalculations.get(2));
+                robotX = coordinates.get(i).get(0); // sets new robotX
+                robotY = coordinates.get(i).get(1); // sets new robotY
             }
-            intakeOff();
-
-
-
+            // Turn off everything and end auto
             break;
         }
     }
+
+    public Vector<Double> TurnCalc(double robotX, double robotY, double robotTheta, double targetX, double targetY, double targetTheta){
+        double distError = Math.sqrt((Math.pow(targetX - robotX, 2)) + (Math.pow(targetY - robotY, 2)));
+        double fieldTheta = Math.atan2((targetY-robotY), (targetX-robotY));
+        double calcTheta = fieldTheta-robotTheta;
+
+        // move these to top of program
+        double direction;
+        double rotation;
+        // right = 0 | left = 1
+        if(fieldTheta<0){
+            direction = 0; // backward
+        }
+        else{
+            direction = 1; // forward
+        }
+        if(calcTheta<0){
+            rotation = 0;
+        }
+        else{
+            rotation = 1;
+        }
+        Vector<Double> endCalcVector = new Vector<Double>(0);
+        endCalcVector.add(direction);
+        endCalcVector.add(rotation);
+        endCalcVector.add(distError);
+        telemetry.addData("TurnCalc", 1);
+        telemetry.update();
+        return endCalcVector;
+    }
+
+    public void relativePower(double direction, double rotation){
+        if (direction>0){
+            forwardBackward(1);
+        }
+        else{
+            forwardBackward(-1);
+        }
+        if (rotation>0){
+            clockwiseCounter(-1);
+        }
+        else{
+            clockwiseCounter(1);
+        }
+
+        double maxMotor = Math.abs(Math.max(Math.max(FR_power, FL_power), Math.max(BL_power, BR_power)));
+        if (maxMotor > 1){
+            FR_power /= maxMotor;
+            FL_power /= maxMotor;
+            BL_power /= maxMotor;
+            BR_power /= maxMotor;
+        }
+        telemetry.addData("Relative Power", 1);
+        telemetry.update();
+
+    }
+
+    public void pidControl(double distError){
+        double integralSum = 0;
+        double lastError = 0;
+        double error;
+        double derivative;
+        double out;
+        ElapsedTime timer = new ElapsedTime();
+
+        while(leftEncoderMotor.getCurrentPosition()<distError){
+            leftEncoderPos = leftEncoderMotor.getCurrentPosition();
+
+            error = distError - leftEncoderPos;
+            derivative = (error-lastError) / timer.seconds();
+            integralSum = integralSum + (error*timer.seconds());
+
+            out = (Kp*error) + (Ki*integralSum) + (Kd*derivative);
+            telemetry.addData("PID", out);
+            telemetry.update();
+            setPower(out);
+
+            lastError = error;
+            timer.reset();
+        }
+        stopAllPower();
+    }
+
+    public void setPower(double c){
+        double maxMotor = Math.abs(Math.max(Math.max(FR_power, FL_power), Math.max(BL_power, BR_power)));
+        if (maxMotor > 1){
+            FR_power /= maxMotor;
+            FL_power /= maxMotor;
+            BL_power /= maxMotor;
+            BR_power /= maxMotor;
+        }
+        FR_power *= c;
+        FL_power *= c;
+        BL_power *= c;
+        BR_power *= c;
+
+        FR.setPower(FR_power);
+        FL.setPower(FL_power);
+        BL.setPower(BL_power);
+        BR.setPower(BR_power);
+    }
+
+
+
+    public void forwardBackward(int power){
+        FR_power -= power;
+        FL_power -= power;
+        BL_power += power;
+        BR_power += power;
+    }
+
+    public void leftRight(int power){
+        FR_power -= power;
+        FL_power += power;
+        BL_power += power;
+        BR_power -= power;
+    }
+
+    public void clockwiseCounter(int power){
+        FR_power -= power;
+        FL_power -= power;
+        BL_power -= power;
+        BR_power -= power;
+    }
+
 
     private List<List<Double>> append(List<List<Double>> start, double data1, double data2, double data3){
         List<Double> newlistpoint = new ArrayList<Double>();
@@ -179,67 +309,6 @@ public class BlueAuto extends LinearOpMode {
         return start;
 
     }
-    public double wayPoint(double targetX, double targetY, double localrobotX, double localrobotY, double shoot, double robotTheta, YawPitchRollAngles orientation){
-
-        double distTarget = Math.sqrt((Math.pow(targetX-localrobotX, 2))+(Math.pow(targetY-localrobotY,2)));
-        calcTheta = Math.toDegrees(Math.atan2((targetY-localrobotY), (targetX-localrobotX)))-robotTheta;
-
-        if (calcTheta == 360 || calcTheta == -360){
-            calcTheta = 0;
-        }
-
-        telemetry.addData("CalcTheta", calcTheta);
-        telemetry.update();
-        localTargetTick = inchesToTicks(distTarget);
-
-        intakeOn();
-        // Check to drive backwards
-        if (Math.abs(calcTheta) >= 135 && Math.abs(calcTheta) <= 225) {
-
-                if (calcTheta < 0) {
-                    turnLeft(-0.5, Math.abs((calcTheta-180) / 2), orientation, 0);
-                    turnLeft(-0.5, Math.abs((calcTheta-180) / 2), orientation, 1);
-                } else {
-                    turnRight(-0.5, (calcTheta+180) / 2, orientation, 0);
-                    turnRight(-0.5, (calcTheta+180) / 2, orientation, 1);
-                }
-                driveBackward(localTargetTick, -0.5, 1);
-                robotTheta += calcTheta;
-
-        }else{
-            if (calcTheta > 0) {
-                turnLeft(-0.5, calcTheta / 2, orientation, 0);
-                turnLeft(-0.5, calcTheta / 2, orientation, 1);
-            } else {
-                turnRight(-0.5, Math.abs(calcTheta / 2), orientation, 0);
-                turnRight(-0.5, Math.abs(calcTheta / 2), orientation, 1);
-            }
-            driveForward(localTargetTick, -0.5, 1);
-        }
-        intakeOff();
-
-        if (shoot == 1){
-            double aprilTagAngle = Math.toDegrees(Math.atan2((aprilTagY-targetY), (aprilTagX-targetX))) - robotTheta;
-
-            telemetry.addData("Atag calc", aprilTagAngle);
-            telemetry.addData("Robot Theta", robotTheta);
-            telemetry.update();
-
-            if (aprilTagAngle > 0) {
-                turnLeft(-0.5, aprilTagAngle / 2, orientation, 0);
-                turnLeft(-0.5, aprilTagAngle / 2, orientation, 1);
-            } else {
-                turnRight(-0.5, Math.abs(aprilTagAngle / 2), orientation, 0);
-                turnRight(-0.5, Math.abs(aprilTagAngle / 2), orientation, 1);
-            }
-            robotTheta += aprilTagAngle;
-
-            shoot();
-        }
-
-        return robotTheta;
-    }
-
     public void driveForward(double targetTicks, double power, long sleep) {
         resetTicks();
         setAllPower(power);
@@ -267,7 +336,6 @@ public class BlueAuto extends LinearOpMode {
 
         sleep(500*sleep);
     }
-
     public void driveBackward(double targetTicks, double power, long sleep) {
         resetTicks();
         setAllPower(-power);
@@ -363,7 +431,7 @@ public class BlueAuto extends LinearOpMode {
             //telemIMUOrientation(orientation, yaw);
         }
 
-        if (yaw > targetAngle+2.5) {
+        if (yaw > targetAngle+2.5 || yaw < targetAngle-2.5) {
             turnRight(-0.15, targetAngle, orientation, 0);
         }
 
@@ -404,7 +472,8 @@ public class BlueAuto extends LinearOpMode {
             telemetry.update();
             //telemIMUOrientation(orientation, yaw);
         }
-        if (yaw < (-targetAngle)-2.5) {
+
+        if (yaw < (-targetAngle)-2.5 || yaw > (-targetAngle)+2.5) {
             turnLeft(-0.15, targetAngle, orientation, 0);
         }
 
@@ -418,13 +487,11 @@ public class BlueAuto extends LinearOpMode {
     }
 
 
-
-
     public void setNormalDrive(){
         FR.setDirection(DcMotorSimple.Direction.FORWARD);
-        FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        FL.setDirection(DcMotorSimple.Direction.FORWARD);
         BR.setDirection(DcMotorSimple.Direction.FORWARD);
-        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BL.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void setStrafingDrive(){
@@ -436,12 +503,9 @@ public class BlueAuto extends LinearOpMode {
 
     public void shoot(){
         intakeOn();
-        launcher.setPower(1);
-        sleep(600);
         storage.setPower(1);
         assistantServo.setPower(1);
         sleep(3000);
-        launcher.setPower(0);
         assistantServo.setPower(0);
         storage.setPower(0);
         intakeOff();
@@ -535,29 +599,6 @@ public class BlueAuto extends LinearOpMode {
         telemetry.update();
     }
 
-    public double rightYawConversion(double yaw){
-        if (yaw < 0){
-            return (Math.abs(yaw));
-        }
-        else{
-            return (360 - yaw);
-        }
-    }
-
-    public double leftYawConversion(double yaw){
-        if (yaw < 0){
-            return (yaw+360);
-        }
-        else{
-            return yaw;
-        }
-    }
-
-    public double TicksToInches(double ticks){
-        double rev = (double)ticks/2000;
-        double inches = OPcircumference * rev;
-        return inches;
-    }
     public double inchesToTicks(double inches) {
         double rev = inches / OPcircumference;
         double tick = 2000 * rev;

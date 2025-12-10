@@ -189,7 +189,8 @@ public class OmniTest extends LinearOpMode {
             //this makes the intake motor pull in
             if(gamepad1.left_trigger > 0){
                 intakeMotor.setPower(1);
-            }else{
+            }
+            else{
                 intakeMotor.setPower(0);
             }
 
