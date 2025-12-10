@@ -77,6 +77,7 @@ public class BlueAuto extends LinearOpMode {
     double Ki = 0.5;
     double Kd = 0.5;
 
+
     YawPitchRollAngles orientation;
     IMU imu;
 
@@ -155,10 +156,8 @@ public class BlueAuto extends LinearOpMode {
             //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);   // 1 means shoot | can be simplifies with camera
 
             for(int i=0; i<coordinates.size(); i++){
-                telemetry.addData("For loop", 1);
-                telemetry.update();
                 turnCalculations = TurnCalc(robotX, robotY, robotTheta, coordinates.get(i).get(0), coordinates.get(i).get(1), 90);
-                relativePower(turnCalculations.get(0), turnCalculations.get(1));
+                relativePower(turnCalculations.get(0), turnCalculations.get(1), turnCalculations.get(2), turnCalculations.get(3));
                 telemetry.addData("Motor1", FR_power);
                 telemetry.addData("Motor2", FL_power);
                 telemetry.addData("Motor3", BL_power);
@@ -169,6 +168,7 @@ public class BlueAuto extends LinearOpMode {
                 robotX = coordinates.get(i).get(0); // sets new robotX
                 robotY = coordinates.get(i).get(1); // sets new robotY
             }
+
             // Turn off everything and end auto
             break;
         }
@@ -179,44 +179,39 @@ public class BlueAuto extends LinearOpMode {
         double fieldTheta = Math.atan2((targetY-robotY), (targetX-robotY));
         double calcTheta = fieldTheta-robotTheta;
 
-        // move these to top of program
         double direction;
-        double rotation;
-        // right = 0 | left = 1
-        if(fieldTheta<0){
-            direction = 0; // backward
-        }
-        else{
+        double strafe;
+
+        if(fieldTheta>=0){
             direction = 1; // forward
+            if (fieldTheta>=90){
+                strafe = 1; // left
+            }
+            else{
+                strafe = -1; // right
+            }
+        }else{
+            direction = -1; // backward
+            if (fieldTheta>=-90){
+                strafe = 1; // left
+            }
+            else{
+                strafe = -1; // right
+            }
         }
-        if(calcTheta<0){
-            rotation = 0;
-        }
-        else{
-            rotation = 1;
-        }
+
         Vector<Double> endCalcVector = new Vector<Double>(0);
+        endCalcVector.add(calcTheta);
+        endCalcVector.add(fieldTheta);
         endCalcVector.add(direction);
-        endCalcVector.add(rotation);
+        endCalcVector.add(strafe);
         endCalcVector.add(distError);
-        telemetry.addData("TurnCalc", 1);
-        telemetry.update();
         return endCalcVector;
     }
 
-    public void relativePower(double direction, double rotation){
-        if (direction>0){
-            forwardBackward(1);
-        }
-        else{
-            forwardBackward(-1);
-        }
-        if (rotation>0){
-            clockwiseCounter(-1);
-        }
-        else{
-            clockwiseCounter(1);
-        }
+    public void relativePower(double calcTheta, double fieldTheta, double direction, double strafe){
+        forwardBackward(direction, fieldTheta);
+        leftRight(strafe, fieldTheta);
 
         double maxMotor = Math.abs(Math.max(Math.max(FR_power, FL_power), Math.max(BL_power, BR_power)));
         if (maxMotor > 1){
@@ -275,20 +270,22 @@ public class BlueAuto extends LinearOpMode {
         BR.setPower(BR_power);
     }
 
+    public void translate(){
 
-
-    public void forwardBackward(int power){
-        FR_power -= power;
-        FL_power -= power;
-        BL_power += power;
-        BR_power += power;
     }
 
-    public void leftRight(int power){
-        FR_power -= power;
-        FL_power += power;
-        BL_power += power;
-        BR_power -= power;
+    public void forwardBackward(double power, double theta){
+        FR_power -= power*Math.sin(theta);
+        FL_power += power*Math.sin(theta);
+        BL_power += power*Math.sin(theta);
+        BR_power -= power*Math.sin(theta);
+    }
+
+    public void leftRight(double power, double theta){
+        FR_power -= power*Math.cos(theta);
+        FL_power -= power*Math.cos(theta);
+        BL_power += power*Math.cos(theta);
+        BR_power += power*Math.cos(theta);
     }
 
     public void clockwiseCounter(int power){
