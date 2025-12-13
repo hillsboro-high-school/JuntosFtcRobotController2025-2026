@@ -35,7 +35,7 @@ public class BlueAuto extends LinearOpMode {
     double BL_power = 0;
     double BR_power = 0;
 
-    private DcMotor storage = null;
+    private DcMotor transfer = null;
 
     private DcMotorEx launcher = null;
 
@@ -68,9 +68,10 @@ public class BlueAuto extends LinearOpMode {
 
     double robotX = 6*halfeTileMat;
     double robotY = 2*halfeTileMat;
-    double robotTheta = 0;
+    double robotTheta = 90;
     double targetTheta;
-    double calcTheta;
+    double direction;
+    double strafe;
     Vector<Double> turnCalculations = new Vector<Double>(0);
 
     double Kp = 2;
@@ -92,7 +93,7 @@ public class BlueAuto extends LinearOpMode {
         BR = hardwareMap.get(DcMotor.class, "RightBack");
 
         IM = hardwareMap.get(DcMotor.class, "intakeMotor");
-        storage = hardwareMap.get(DcMotor.class, "storage");
+        transfer = hardwareMap.get(DcMotor.class, "transfer");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
 
         assistantServo = hardwareMap.get(CRServo.class, "assistantServo");
@@ -105,9 +106,8 @@ public class BlueAuto extends LinearOpMode {
 
         imu = hardwareMap.get(IMU.class, "imu");
 
-        leftEncoderMotor.setDirection(DcMotorSimple.Direction.FORWARD);  // Directions taken from BlackBoxBot.java
+        leftEncoderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightEncoderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
         centerEncoderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -115,8 +115,8 @@ public class BlueAuto extends LinearOpMode {
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
 
@@ -142,11 +142,12 @@ public class BlueAuto extends LinearOpMode {
         waitForStart();
         resetTicks();
 
-        while (opModeIsActive()) {
+        while(opModeIsActive()) {
+
             /*
             ALL POWER MUST BE NEGATIVE
             Sleep is used when testing, set to 0 for max time
-            */
+
 
             List<List<Double>> coordinates = new ArrayList<List<Double>>();
             append(coordinates, 8 * halfeTileMat, 8 * halfeTileMat,  1);  // data1 = x
@@ -158,16 +159,45 @@ public class BlueAuto extends LinearOpMode {
             for(int i=0; i<coordinates.size(); i++){
                 turnCalculations = TurnCalc(robotX, robotY, robotTheta, coordinates.get(i).get(0), coordinates.get(i).get(1), 90);
                 relativePower(turnCalculations.get(0), turnCalculations.get(1), turnCalculations.get(2), turnCalculations.get(3));
-                telemetry.addData("Motor1", FR_power);
-                telemetry.addData("Motor2", FL_power);
-                telemetry.addData("Motor3", BL_power);
-                telemetry.addData("Motor4", BR_power);
-                telemetry.update();
-                sleep(3000);
                 pidControl(turnCalculations.get(2));
                 robotX = coordinates.get(i).get(0); // sets new robotX
                 robotY = coordinates.get(i).get(1); // sets new robotY
             }
+             */
+
+            localTargetTick = inchesToTicks(tileMatLength);
+            intakeOn();
+            launcher.setVelocity(-1700);
+            driveBackward(localTargetTick, -1, 0);
+
+            assistantServo.setPower(0);
+            transfer.setPower(-1);
+            localTargetTick = inchesToTicks(halfeTileMat);
+            sleep(2000);
+            launcher.setVelocity(0);
+            transfer.setPower(0);
+            assistantServo.setPower(1);
+            intakeOff();
+
+            driveBackward(localTargetTick, -1, 0);
+            turnRight(-1, 45, orientation, 0);
+            intakeOn();
+            localTargetTick = inchesToTicks(3*halfeTileMat);
+            driveForward(localTargetTick, -1, 1);
+            driveBackward(localTargetTick, -1, 0);
+            turnLeft(-1, 45, orientation, 0);
+            launcher.setVelocity(-1700);
+            localTargetTick = inchesToTicks(halfeTileMat);
+            driveForward(localTargetTick, -1, 0);
+
+            assistantServo.setPower(0);
+            transfer.setPower(-1);
+            sleep(3000);
+            launcher.setVelocity(0);
+            transfer.setPower(0);
+            assistantServo.setPower(1);
+            intakeOff();
+
 
             // Turn off everything and end auto
             break;
@@ -176,11 +206,12 @@ public class BlueAuto extends LinearOpMode {
 
     public Vector<Double> TurnCalc(double robotX, double robotY, double robotTheta, double targetX, double targetY, double targetTheta){
         double distError = Math.sqrt((Math.pow(targetX - robotX, 2)) + (Math.pow(targetY - robotY, 2)));
-        double fieldTheta = Math.atan2((targetY-robotY), (targetX-robotY));
+        double fieldTheta = Math.toDegrees(Math.atan2((targetY-robotY), (targetX-robotY)));
         double calcTheta = fieldTheta-robotTheta;
 
-        double direction;
-        double strafe;
+        telemetry.addData("DE", distError);
+        telemetry.update();
+        sleep(5000);
 
         if(fieldTheta>=0){
             direction = 1; // forward
@@ -210,6 +241,7 @@ public class BlueAuto extends LinearOpMode {
     }
 
     public void relativePower(double calcTheta, double fieldTheta, double direction, double strafe){
+
         forwardBackward(direction, fieldTheta);
         leftRight(strafe, fieldTheta);
 
@@ -220,8 +252,13 @@ public class BlueAuto extends LinearOpMode {
             BL_power /= maxMotor;
             BR_power /= maxMotor;
         }
-        telemetry.addData("Relative Power", 1);
+        telemetry.addData("FR", FR_power);
+        telemetry.addData("FL", FL_power);
+        telemetry.addData("BR", BR_power);
+        telemetry.addData("BL", BL_power);
         telemetry.update();
+        sleep(5000);
+
 
     }
 
@@ -233,10 +270,10 @@ public class BlueAuto extends LinearOpMode {
         double out;
         ElapsedTime timer = new ElapsedTime();
 
-        while(leftEncoderMotor.getCurrentPosition()<distError){
-            leftEncoderPos = leftEncoderMotor.getCurrentPosition();
+        while(getLeftTicks()<inchesToTicks(distError)){
+            resetLeftTicks();
 
-            error = distError - leftEncoderPos;
+            error = distError - getLeftTicks();
             derivative = (error-lastError) / timer.seconds();
             integralSum = integralSum + (error*timer.seconds());
 
@@ -264,15 +301,18 @@ public class BlueAuto extends LinearOpMode {
         BL_power *= c;
         BR_power *= c;
 
+        telemetry.addData("FR", FR_power);
+        telemetry.addData("FL", FL_power);
+        telemetry.addData("BR", BR_power);
+        telemetry.addData("BL", BL_power);
+
+
         FR.setPower(FR_power);
         FL.setPower(FL_power);
         BL.setPower(BL_power);
         BR.setPower(BR_power);
     }
 
-    public void translate(){
-
-    }
 
     public void forwardBackward(double power, double theta){
         FR_power -= power*Math.sin(theta);
@@ -308,7 +348,7 @@ public class BlueAuto extends LinearOpMode {
     }
     public void driveForward(double targetTicks, double power, long sleep) {
         resetTicks();
-        setAllPower(power);
+        setAllPower(-power);
         telemAllTicks("Forward");
 
         while (!(rightStop && leftStop)) {
@@ -335,9 +375,7 @@ public class BlueAuto extends LinearOpMode {
     }
     public void driveBackward(double targetTicks, double power, long sleep) {
         resetTicks();
-        setAllPower(-power);
-
-        telemAllTicks("Backward");
+        setAllPower(power);
 
         while (!(rightStop && leftStop)) {
             if (Math.abs(getRightTicks()) >= targetTicks) {
@@ -401,7 +439,7 @@ public class BlueAuto extends LinearOpMode {
         sleep(500*sleep);
     }
 
-    // Turns in one direction but doesn't turn back to back
+
     public void turnLeft(double power, double targetAngle, YawPitchRollAngles orientation, long sleep){
         double yaw = orientation.getYaw();
 
@@ -416,8 +454,8 @@ public class BlueAuto extends LinearOpMode {
             targetTheta += 0.1;
         }
 
-        setRightPower(power);
-        setLeftPower(-power);
+        setRightPower(-power);
+        setLeftPower(power);
 
         while(yaw < targetAngle) {
             orientation = imu.getRobotYawPitchRollAngles();
@@ -428,9 +466,12 @@ public class BlueAuto extends LinearOpMode {
             //telemIMUOrientation(orientation, yaw);
         }
 
+        /*
         if (yaw > targetAngle+2.5 || yaw < targetAngle-2.5) {
             turnRight(-0.15, targetAngle, orientation, 0);
         }
+
+         */
 
         stopAllPower();
         resetTicks();
@@ -456,8 +497,8 @@ public class BlueAuto extends LinearOpMode {
             targetTheta += 0.1;
         }
 
-        setLeftPower(power);
-        setRightPower(-power);
+        setLeftPower(-power);
+        setRightPower(power);
 
         while(yaw > targetAngle){
             orientation = imu.getRobotYawPitchRollAngles();
@@ -470,9 +511,12 @@ public class BlueAuto extends LinearOpMode {
             //telemIMUOrientation(orientation, yaw);
         }
 
+        /*
         if (yaw < (-targetAngle)-2.5 || yaw > (-targetAngle)+2.5) {
             turnLeft(-0.15, targetAngle, orientation, 0);
         }
+
+         */
 
         stopAllPower();
         resetTicks();
@@ -485,9 +529,9 @@ public class BlueAuto extends LinearOpMode {
 
 
     public void setNormalDrive(){
-        FR.setDirection(DcMotorSimple.Direction.FORWARD);
+        FR.setDirection(DcMotorSimple.Direction.REVERSE);
         FL.setDirection(DcMotorSimple.Direction.FORWARD);
-        BR.setDirection(DcMotorSimple.Direction.FORWARD);
+        BR.setDirection(DcMotorSimple.Direction.REVERSE);
         BL.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
@@ -500,11 +544,11 @@ public class BlueAuto extends LinearOpMode {
 
     public void shoot(){
         intakeOn();
-        storage.setPower(1);
+        transfer.setPower(1);
         assistantServo.setPower(1);
         sleep(3000);
         assistantServo.setPower(0);
-        storage.setPower(0);
+        transfer.setPower(0);
         intakeOff();
     }
 

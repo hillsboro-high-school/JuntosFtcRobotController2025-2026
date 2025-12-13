@@ -34,7 +34,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -65,7 +64,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: OmniTest", group="Linear OpMode")
+@TeleOp(name="DRIVE", group="Linear OpMode")
 //@Disabled
 public class OmniTest extends LinearOpMode {
 
@@ -78,11 +77,14 @@ public class OmniTest extends LinearOpMode {
 
     private DcMotor intakeMotor = null;
 
-    private DcMotor storage = null;
+    private DcMotor transfer = null;
 
     private DcMotorEx launcher = null;
 
     private CRServo assistantServo = null;
+
+    boolean launcherIsAtMaxSpeed = false;
+    double targetSpeed = -1700;
 
 
     @Override
@@ -96,27 +98,17 @@ public class OmniTest extends LinearOpMode {
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
 
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
-        storage = hardwareMap.get(DcMotor.class, "storage");
+        transfer = hardwareMap.get(DcMotor.class, "transfer");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
 
         assistantServo = hardwareMap.get(CRServo.class, "assistantServo");
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
+
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.REVERSE);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
         launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -127,6 +119,7 @@ public class OmniTest extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            double launcherVel = launcher.getVelocity();
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -154,22 +147,6 @@ public class OmniTest extends LinearOpMode {
                 backRightPower  /= max;
             }
 
-            // This is test code:
-            //
-            // Uncomment the following code to test your motor directions.
-            // Each button should make the corresponding motor run FORWARD.
-            //   1) First get all the motors to take to correct positions on the robot
-            //      by adjusting your Robot Configuration if necessary.
-            //   2) Then make sure they run in the correct direction by modifying the
-            //      the setDirection() calls above.
-            // Once the correct motors move in the correct direction re-comment this code.
-
-            /*
-            frontLeftPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            backLeftPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            frontRightPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            backRightPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
 
             // Send calculated power to wheels
             // Holding A makes the robot move slower so it can park easier
@@ -188,34 +165,33 @@ public class OmniTest extends LinearOpMode {
             //This stuff is for the intake motor
             //this makes the intake motor pull in
             if(gamepad1.left_trigger > 0){
-                intakeMotor.setPower(1);
+                intakeMotor.setPower(-1);
             }
             else{
                 intakeMotor.setPower(0);
             }
 
             if(gamepad1.right_trigger > 0){
-                launcher.setPower(1);
+                launcher.setVelocity(targetSpeed);
             }else {
                 launcher.setPower(0);
             }
 
-            if(gamepad1.right_bumper){
-                storage.setPower(1);
-            }else{
-                storage.setPower(0);
-            }
-
-            if(gamepad1.left_bumper){
-                assistantServo.setPower(1);
-            }else{
-                assistantServo.setPower(0);
-            }
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+            telemetry.addData("velocity", launcher.getVelocity());
             telemetry.update();
+
+            if(gamepad1.right_bumper){
+                transfer.setPower(-1);
+            }else{
+                transfer.setPower(0);
+            }
+
+            launcherIsAtMaxSpeed = launcherVel <= targetSpeed;
+
+            if(gamepad1.b && launcherIsAtMaxSpeed || gamepad1.start) {
+                assistantServo.setPower(0);
+            }else{
+                assistantServo.setPower(1);
+            }
         }
     }}
