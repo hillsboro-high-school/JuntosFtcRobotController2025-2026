@@ -63,28 +63,18 @@ public class BlueAuto extends LinearOpMode {
     private int tileMatLength = 24;  // Inches
     private int halfeTileMat = 12;  // Inches
 
-
-    double localTargetTick;
-
-
-    double aprilTagX = halfeTileMat;
-    double aprilTagY = 11*halfeTileMat;
-
-    double robotX = 4*halfeTileMat;
-    double robotY = 8*halfeTileMat;
-    double robotTheta = 90;
+    double robotX = 0*halfeTileMat;
+    double robotY = 0*halfeTileMat;
+    double robotTheta = 0;
     double targetTheta;
-    double direction;
-    double strafe;
     Vector<Double> turnCalculations = new Vector<Double>(0);
 
-    double Kp = 1.3;
-    double Ki = 0.3;
-    double Kd = 0.9;
+    double Kp = 0.7;
+    double Ki = 0;
+    double Kd = 0.05;
 
     GoBildaPinpointDriver pinpoint;
 
-    YawPitchRollAngles orientation;
     IMU imu;
 
     @Override
@@ -126,27 +116,11 @@ public class BlueAuto extends LinearOpMode {
         configurePinpoint();
 
         // Set the location of the robot - this should be the place you are starting the robot from
+
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
-
-
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
-        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
-
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
-
-        // Now initialize the IMU with this mounting orientation
-        // Note: if you choose two conflicting directions, this initialization will cause a code exception.
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
-        imu.resetYaw();
-
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        imu.resetYaw();
-        //curAngle = 0;
 
         resetTicks();
         setNormalDrive();  // Sets all motors to correct forward/reverse
-        telemIMUOrientation(orientation);
-
 
         telemetry.addData("Pinpoint status: ", pinpoint.getDeviceStatus());
         telemetry.update();
@@ -165,15 +139,15 @@ public class BlueAuto extends LinearOpMode {
 
 
             List<List<Double>> coordinates = new ArrayList<List<Double>>();
-            append(coordinates, 8 * halfeTileMat, 4 * halfeTileMat,135);                        // data1 = x
-            //append(coordinates, 4*halfeTileMat, 4 * halfeTileMat, 0);                                          // data2 = y
-            //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);                                        // data3 = theta
+            append(coordinates, 1 * halfeTileMat, 0 * halfeTileMat,0);                        // data1 = x
+            //append(coordinates, 4 * halfeTileMat, 10 * halfeTileMat, 0);                                      // data2 = y
+            //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);                                        // data3 = turn amount
             //append(coordinates, halfeTileMat, 5 * halfeTileMat, 0);
             //append(coordinates, 5 * halfeTileMat, 7 * halfeTileMat, 1);
 
             for(int i=0; i<coordinates.size(); i++){
                 turnCalculations = TurnCalc(robotX, robotY, robotTheta, coordinates.get(i).get(0), coordinates.get(i).get(1), coordinates.get(i).get(2));
-                pidControl(turnCalculations.get(2), robotX, robotY, coordinates.get(i).get(0), coordinates.get(i).get(1), coordinates.get(i).get(2), turnCalculations.get(0));
+                pidControl(turnCalculations.get(2), robotX, robotY, coordinates.get(i).get(0), coordinates.get(i).get(1), coordinates.get(i).get(2), robotTheta);
                 robotX = coordinates.get(i).get(0); // sets new robotX
                 robotY = coordinates.get(i).get(1); // sets new robotY
             }
@@ -198,19 +172,14 @@ public class BlueAuto extends LinearOpMode {
 
     public void relativePower(double deltaTheta, double fieldTheta, double c){
         setVarPowerZero();
-        setTranslation(Math.toRadians(fieldTheta));
-        setRotation(deltaTheta, c);
 
-        double maxMotor = Math.abs(Math.max(Math.max(Math.abs(FR_power), Math.abs(FL_power)), Math.max(Math.abs(BL_power), Math.abs(BR_power))));
-        if (maxMotor > 1){
-            FR_power /= maxMotor;
-            FL_power /= maxMotor;
-            BL_power /= maxMotor;
-            BR_power /= maxMotor;
-        }
+        setTranslation(Math.toRadians(fieldTheta));
+        //setRotation(deltaTheta, c);
+
+        equalizePower();
     }
 
-    public void pidControl(double distError, double robotX, double robotY, double targetX, double targetY, double targetTheta, double totalTheta){
+    public void pidControl(double distError, double robotX, double robotY, double targetX, double targetY, double targetTheta, double rT){
         double integralSum = 0;
         double lastError = 0;
         double derivative;
@@ -219,44 +188,44 @@ public class BlueAuto extends LinearOpMode {
         double i;
         double d;
 
-        double c = (double) 1/180;
+        pinpoint.resetPosAndIMU();
+
         Vector<Double> instTurnCalc = new Vector<Double>(0);
-
         ElapsedTime timer = new ElapsedTime();
-
-        //double robotDist = 0;
 
         while(distError > 0.2){
             pinpoint.update();
             Pose2D pose2D = pinpoint.getPosition();
 
-            instTurnCalc = TurnCalc(robotX + pose2D.getX(DistanceUnit.INCH), robotY + pose2D.getY(DistanceUnit.INCH), robotTheta+pose2D.getHeading(AngleUnit.DEGREES), targetX, targetY, targetTheta);
+            // X AND Y ARE SWAPPED
+            instTurnCalc = TurnCalc(robotX + pose2D.getY(DistanceUnit.INCH), robotY + pose2D.getX(DistanceUnit.INCH), rT+pose2D.getHeading(AngleUnit.DEGREES), targetX, targetY, targetTheta);
 
             distError = instTurnCalc.get(2);
             derivative = (distError-lastError) / timer.seconds();
             integralSum = integralSum + (distError*timer.seconds());
 
-            if ((pose2D.getHeading(AngleUnit.DEGREES))-totalTheta > 4){
-                relativePower(instTurnCalc.get(0), instTurnCalc.get(1), c);
-            }
-            else{
-                relativePower(instTurnCalc.get(0), instTurnCalc.get(1), 0);
-            }
-
+            relativePower(instTurnCalc.get(0), instTurnCalc.get(1), 0.1);
 
             p = Kp*distError;
             i = Ki*integralSum;
             d = Kd*derivative;
             out = p+i+d;
 
-            telemetry.addData("X coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
-            telemetry.addData("Y coordinate (IN)", pose2D.getY(DistanceUnit.INCH));
+            telemetry.addData("X coordinate (IN)", pose2D.getY(DistanceUnit.INCH));
+            telemetry.addData("Y coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
+            telemetry.addData("Heading angle (DEGREES)", pose2D.getHeading(AngleUnit.DEGREES));
             telemetry.addData("TargetX (IN)", targetX);
             telemetry.addData("TargetY (IN)", targetY);
-            telemetry.addData("Heading angle (DEGREES)", pose2D.getHeading(AngleUnit.DEGREES));
+            telemetry.addData("Target Heading", targetTheta);
             telemetry.addData("DistError", distError);
             telemetry.addData("FieldTheta", instTurnCalc.get(1));
             telemetry.addData("DeltaTheta", instTurnCalc.get(0));
+            telemetry.addData("Direction", pose2D.getHeading(AngleUnit.DEGREES)-instTurnCalc.get(1));
+
+            telemetry.addData("FR", FR_power);
+            telemetry.addData("FL", FL_power);
+            telemetry.addData("BR", BR_power);
+            telemetry.addData("BL", BL_power);
 
             /*
             telemetry.addData("P", p);
@@ -267,7 +236,6 @@ public class BlueAuto extends LinearOpMode {
             telemetry.update();
 
             setPower(out);
-
             lastError = distError;
             timer.reset();
         }
@@ -281,13 +249,7 @@ public class BlueAuto extends LinearOpMode {
         BL_power *= c;
         BR_power *= c;
 
-        double maxMotor = Math.abs(Math.max(Math.max(Math.abs(FR_power), Math.abs(FL_power)), Math.max(Math.abs(BL_power), Math.abs(BR_power))));
-        if (maxMotor > 1){
-            FR_power /= maxMotor;
-            FL_power /= maxMotor;
-            BL_power /= maxMotor;
-            BR_power /= maxMotor;
-        }
+        equalizePower();
 
         FR.setPower(FR_power);
         FL.setPower(FL_power);
@@ -303,11 +265,21 @@ public class BlueAuto extends LinearOpMode {
     }
 
     public void setRotation(double theta, double c){
-        if (theta!=0){
+        if (Math.abs(theta) >= 2.5){
             FR_power += theta*c;
             FL_power -= theta*c;
             BL_power -= theta*c;
             BR_power += theta*c;
+        }
+    }
+
+    public void equalizePower(){
+        double maxMotor = Math.abs(Math.max(Math.max(Math.abs(FR_power), Math.abs(FL_power)), Math.max(Math.abs(BL_power), Math.abs(BR_power))));
+        if (maxMotor > 0.5){
+            FR_power /= maxMotor/0.5;
+            FL_power /= maxMotor/0.5;
+            BL_power /= maxMotor/0.5;
+            BR_power /= maxMotor/0.5;
         }
     }
 
@@ -317,6 +289,12 @@ public class BlueAuto extends LinearOpMode {
         FL_power = 0;
         BL_power = 0;
         BR_power = 0;
+    }
+
+    public double getRobotTheta(){
+        pinpoint.update();
+        Pose2D pose2D = pinpoint.getPosition();
+        return pose2D.getHeading(AngleUnit.DEGREES);
     }
 
     private List<List<Double>> append(List<List<Double>> start, double data1, double data2, double data3){
@@ -594,8 +572,8 @@ public class BlueAuto extends LinearOpMode {
          *  The Y pod offset refers to how far forwards from the tracking point the Y (strafe) odometry pod is.
          *  Forward of center is a positive number, backwards is a negative number.
          */
-        pinpoint.setOffsets(95, -125, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
-
+        pinpoint.setOffsets(-125, 95, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
+        // x = 95        y = -125 - previous
         /*
          * Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
          * the goBILDA_SWINGARM_POD, or the goBILDA_4_BAR_POD.
@@ -610,8 +588,8 @@ public class BlueAuto extends LinearOpMode {
          * increase when you move the robot forward. And the Y (strafe) pod should increase when
          * you move the robot to the left.
          */
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED,
-                GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
+                GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
         /*
          * Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
