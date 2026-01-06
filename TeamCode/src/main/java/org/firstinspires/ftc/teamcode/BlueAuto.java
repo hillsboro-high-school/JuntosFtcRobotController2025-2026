@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -152,7 +151,6 @@ public class BlueAuto extends LinearOpMode {
                 robotY = coordinates.get(i).get(1); // sets new robotY
             }
 
-
             // Turn off everything and end auto
             break;
         }
@@ -174,7 +172,7 @@ public class BlueAuto extends LinearOpMode {
         setVarPowerZero();
 
         setTranslation(Math.toRadians(fieldTheta));
-        //setRotation(deltaTheta, c);
+        setRotation(deltaTheta, c);
 
         equalizePower();
     }
