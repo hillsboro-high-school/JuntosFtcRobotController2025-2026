@@ -35,7 +35,7 @@ public class Q3BlueAuto extends LinearOpMode{
     double robotY;
     double robotTheta;
 
-    //Getters
+    // Robot Getters
     public double getRobotX(){
         return robotX;
     }
@@ -44,7 +44,7 @@ public class Q3BlueAuto extends LinearOpMode{
     }
     public double getRobotTheta(){return robotTheta;}
 
-    // Setters
+    // Robot Setters
     public void setRobotX(double xCord){
         robotX = xCord;
     }
@@ -53,6 +53,23 @@ public class Q3BlueAuto extends LinearOpMode{
     }
     public void setRobotTheta(double theta){robotTheta = theta;}
 
+    double translationVectorAngle;
+    double rotError;  // Rotation Error
+    double rotBias; // Const for translation
+
+    public double getTranslationVectorAngle(){return translationVectorAngle;}
+    public double getRotError(){return rotError;}
+    public double getRotBias(){return rotBias;}
+
+    public void setTranslationVectorAngle(double angle) {
+        translationVectorAngle = angle;
+    }
+    public void setRotError(double rotation) {
+        rotError = rotation;
+    }
+    public void setRotBias(double rotationBias){rotBias = rotationBias;}
+
+    // Pinpoint Defined
     GoBildaPinpointDriver pinpoint;
 
     @Override
@@ -79,6 +96,26 @@ public class Q3BlueAuto extends LinearOpMode{
         // Set the location of the robot - this should be the place you are starting the robot from
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, getRobotX(), getRobotY(), AngleUnit.DEGREES, 0));
 
+        waitForStart();
+
+        run();
+    }
+
+    public void run(){
+        while(true){
+            pinpoint.update();
+            Pose2D pinpointData = pinpoint.getPosition();
+            telemPinpoint(pinpointData);
+        }
+    }
+
+    public void setPower(double translationPID, double rotPID){
+        // Make the math calculations constansts in this function
+        // Add atan2
+        double FL_power = (Math.cos(getTranslationVectorAngle()) + Math.sin(getTranslationVectorAngle()))*translationPID + getRotError() * getRotBias() * rotPID;
+        double FR_power;
+        double BL_power;
+        double BR_power;
     }
 
     public void configurePinpoint(){
@@ -108,7 +145,7 @@ public class Q3BlueAuto extends LinearOpMode{
          * you move the robot to the left.
          */
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
-                GoBildaPinpointDriver.EncoderDirection.FORWARD);
+                GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         /*
          * Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
@@ -121,4 +158,10 @@ public class Q3BlueAuto extends LinearOpMode{
         pinpoint.resetPosAndIMU();
     }
 
+    public void telemPinpoint(Pose2D pose2D){
+        telemetry.addData("X coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
+        telemetry.addData("Y coordinate (IN)", pose2D.getY(DistanceUnit.INCH));
+        telemetry.addData("Heading angle (DEGREES)", pose2D.getHeading(AngleUnit.DEGREES));
+        telemetry.update();
+    }
 }
