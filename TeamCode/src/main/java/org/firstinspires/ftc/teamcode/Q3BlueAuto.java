@@ -73,6 +73,7 @@ public class Q3BlueAuto extends LinearOpMode{
     GoBildaPinpointDriver pinpoint;
 
     @Override
+    // Init function
     public void runOpMode() {
         FL = hardwareMap.get(DcMotor.class, "LeftFront");
         BL = hardwareMap.get(DcMotor.class, "LeftBack");
