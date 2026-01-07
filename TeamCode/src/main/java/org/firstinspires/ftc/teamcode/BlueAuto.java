@@ -303,8 +303,8 @@ public class BlueAuto extends LinearOpMode {
         newlistpoint.add(data3);
         start.add(newlistpoint);
         return start;
-
     }
+
     public void driveForward(double targetTicks, double power, long sleep) {
         resetTicks();
         setAllPower(-power);
