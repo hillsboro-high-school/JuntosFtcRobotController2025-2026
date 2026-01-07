@@ -142,14 +142,16 @@ public class Q3BlueAuto extends LinearOpMode{
         double localRobotY = getRobotY();
         double robotVelocity;
 
+        // X and Y are swapped -> EX: (1,0) = (0,1)
         setTargetX(2*halfTileMat);  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
         setTargetY(0);
 
         //Setting initial errors to seed while loop with good values
         double distError = Math.sqrt(Math.pow((getTargetX()-getRobotX()), 2) + Math.pow((getTargetY()-getRobotY()), 2));
+        double distErrorThreshold = 0.2; // Inches
         // Add in rotational error calculation
 
-        while(distError > 0.2) { //Check for completion condition in translation and rotation
+        while(distError > distErrorThreshold) { //Check for completion condition in translation and rotation
             //perform distance/angle error calculation
             distError = Math.sqrt(Math.pow((getTargetX()-getRobotX()), 2) + Math.pow((getTargetY()-getRobotY()), 2));
 
