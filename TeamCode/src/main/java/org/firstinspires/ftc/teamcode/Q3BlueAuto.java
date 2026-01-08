@@ -65,7 +65,7 @@ public class Q3BlueAuto extends LinearOpMode{
     public double getRotBias(){return rotBias;}
 
     public void setTranslationVectorAngle(double angle) {
-        translationVectorAngle = angle;
+        translationVectorAngle = (angle-Math.PI/2);
     }
     public void setRotError(double rotation) {
         rotError = rotation;
@@ -125,7 +125,8 @@ public class Q3BlueAuto extends LinearOpMode{
         configurePinpoint();
 
         // Set starting location at (0,0)
-        setRobotX(0);
+        // X and Y are switched
+        setRobotX(2*halfTileMat);
         setRobotY(0);
 
         // Set the location of the robot - this should be the place you are starting the robot from
@@ -143,12 +144,12 @@ public class Q3BlueAuto extends LinearOpMode{
         double robotVelocity;
 
         // X and Y are swapped -> EX: (1,0) = (0,1)
-        setTargetX(2*halfTileMat);  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
-        setTargetY(0);
+        setTargetX(0);  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
+        setTargetY(2*halfTileMat);
 
         //Setting initial errors to seed while loop with good values
         double distError = Math.sqrt(Math.pow((getTargetX()-getRobotX()), 2) + Math.pow((getTargetY()-getRobotY()), 2));
-        double distErrorThreshold = 0.2; // Inches
+        double distErrorThreshold = 0.5; // Inches
         // Add in rotational error calculation
 
         while(distError > distErrorThreshold) { //Check for completion condition in translation and rotation
@@ -188,11 +189,13 @@ public class Q3BlueAuto extends LinearOpMode{
             grandTelemetryFunction(distError, robotCurPos, robotVelocity);
 
         }
+        setPowerToZero();
     }
 
     public void setRelativePower(double translationPID, double rotPID){
         //The fxns with "translationsAngle..." are just get and set angle
         // Math calculations for easier reading
+        //double testAngle = 0;
         double cosVal = (Math.cos(getTranslationVectorAngle())) / Math.sqrt(2);
         double sinVal = Math.sin(getTranslationVectorAngle());
 
@@ -202,10 +205,11 @@ public class Q3BlueAuto extends LinearOpMode{
         setRotBias(0); //Needs to be a constant > 0
         double rotationControl = getRotError() * getRotBias() * rotPID; //This calculates final rotational power
 
+
         // Calculates power needed for each motor to get to the relative position
-        setFL_power((cosVal + sinVal)*translationPID + rotationControl);
+        setFL_power((cosVal - sinVal)*translationPID + rotationControl);
         setFR_power((-cosVal - sinVal)*translationPID + rotationControl);
-        setBL_power ((cosVal - sinVal)*translationPID + rotationControl);
+        setBL_power ((cosVal + sinVal)*translationPID + rotationControl);
         setBR_power ((-cosVal + sinVal)*translationPID + rotationControl);
     }
 
@@ -213,10 +217,10 @@ public class Q3BlueAuto extends LinearOpMode{
         double maxMotorThreshold = 0.5; // 50% motor power
         double maxMotor = Math.abs(Math.max(Math.max(Math.abs(getFR_power()), Math.abs(getFL_power())), Math.max(Math.abs(getBL_power()), Math.abs(getBR_power()))));
         if (maxMotor > maxMotorThreshold){
-            setFL_power(getFL_power() / maxMotor/0.5);
-            setFR_power(getFR_power() / maxMotor/0.5);
-            setBR_power(getBR_power() / maxMotor/0.5);
-            setBL_power(getBL_power() / maxMotor/0.5);
+            setFL_power(getFL_power() /(maxMotor/maxMotorThreshold));
+            setFR_power(getFR_power() / (maxMotor/maxMotorThreshold));
+            setBR_power(getBR_power() / (maxMotor/maxMotorThreshold));
+            setBL_power(getBL_power() / (maxMotor/maxMotorThreshold));
         }
     }
 
@@ -225,6 +229,13 @@ public class Q3BlueAuto extends LinearOpMode{
         FR.setPower(getFR_power());
         BL.setPower(getBL_power());
         BR.setPower(getBR_power());
+    }
+
+    public void setPowerToZero(){
+        FL.setPower(0);
+        FR.setPower(0);
+        BL.setPower(0);
+        BR.setPower(0);
     }
 
     // Configure settings for Pinpoint
@@ -280,6 +291,7 @@ public class Q3BlueAuto extends LinearOpMode{
         telemetry.addData("RobotX", getRobotX());
         telemetry.addData("RobotY", getRobotY());
         telemetry.addData("Dist error", distError);
+        telemetry.addData("Translation angle", Math.toDegrees(getTranslationVectorAngle()));
 
         telemetry.addData("FR_Power", getFR_power());
         telemetry.addData("FL_Power", getFL_power());
