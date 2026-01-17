@@ -84,7 +84,7 @@ public class OmniTest extends LinearOpMode {
     private CRServo assistantServo = null;
 
     boolean launcherIsAtMaxSpeed = false;
-    double targetSpeed = -1700;
+    double targetSpeed = -2100;
 
 
     @Override
