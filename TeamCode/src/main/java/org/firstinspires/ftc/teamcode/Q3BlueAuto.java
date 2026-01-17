@@ -159,9 +159,9 @@ public class Q3BlueAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 4 * halfTileMat, 0,0);
-        append(coordinates, 4 * halfTileMat, 0,45);
-        append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
+        append(coordinates, 2 * halfTileMat, 2*halfTileMat,90);
+        //append(coordinates, 4 * halfTileMat, 0,45);
+        //append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
 
         for(int i=0; i<coordinates.size(); i++) {
             // using a local robot x/y for each loop
@@ -200,33 +200,33 @@ public class Q3BlueAuto extends LinearOpMode{
 
                 //Perform field vector calculation
                 // Test by hard coding angles and seeing which way the robot moves
-                setTranslationVectorAngle(((Math.atan2((getRobotY() - getTargetY()), (getTargetX() - getRobotX()))) + Math.toRadians(getRobotTheta()))); //takes y,x and returns angle in radians
+                setTranslationVectorAngle(((Math.atan2((getTargetY()- getRobotY()), (getTargetX() - getRobotX()))) + Math.toRadians(getRobotTheta()))); //takes y,x and returns angle in radians
                 //getRobot
 
                 //Calculate Translation and Rotational PID terms
                 //Rolling average controls how much influence the most recent calculation has over the value.
                 // A Small rolling average gives it low influence. Needs to be between 0 and 1
 
-            /* Uncomment once rotation is working theta is changing as the robot moves towards the object
-            double rollingAvgP = 0.9;
-            double rollingAvgD = 0.5;
-            double thresholdI = 0.2;
+                /* Uncomment once rotation is working theta is changing as the robot moves towards the object
+                double rollingAvgP = 0.9;
+                double rollingAvgD = 0.5;
+                double thresholdI = 0.2;
 
-            double thresholdPID = 0.3;
+                double thresholdPID = 0.3;
 
-            p = p * (1-rollingAvgP) + getDistError() * rollingAvgP;
-            d = d * (1-rollingAvgD) + robotVelocity/getDistError() * rollingAvgD;
-            if (robotVelocity < thresholdI){i = i + 1/Math.abs(robotVelocity);}
+                p = p * (1-rollingAvgP) + getDistError() * rollingAvgP;
+                d = d * (1-rollingAvgD) + robotVelocity/getDistError() * rollingAvgD;
+                if (robotVelocity < thresholdI){i = i + 1/Math.abs(robotVelocity);}
 
-            double translationPID = Kp*p-Kd*d+Ki*i;
-            if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above 0.3 to avoid zeros
-             */
+                double translationPID = Kp*p-Kd*d+Ki*i;
+                if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above 0.3 to avoid zeros
+                 */
 
                 setRelativePower(1, 1); //This function calculates relative motor powers using filed vector and rotational error
 
                 normalizePower(); //This function normalizes motor power to avoid any power being >1
 
-                setPower();  //Set motor powers (setting to zero can help debug, use setPowerToZero fxn)
+                setPowerToZero();  //Set motor powers (setting to zero can help debug, use setPowerToZero fxn)
 
                 //Update pinpoint and query robot current position and velocity
                 pinpoint.update();
@@ -322,7 +322,7 @@ public class Q3BlueAuto extends LinearOpMode{
          * you move the robot to the left.
          */
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
-                GoBildaPinpointDriver.EncoderDirection.FORWARD);
+                GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         /*
          * Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary

@@ -90,6 +90,7 @@ public class OmniTest extends LinearOpMode {
     private Servo ColorServo = null;
 
     boolean launcherIsAtMaxSpeed = false;
+    boolean launchingFar = false;
     double closeTargetSpeed = -1300;
     double farTargetSpeed = -1450;
 
@@ -186,20 +187,20 @@ public class OmniTest extends LinearOpMode {
             // CLOSE
             if (gamepad1.right_trigger > 0) {
                 launcher.setVelocity(closeTargetSpeed);
-                launcher.setPower(1);
+                launchingFar = false;
+                //launcher.setPower(1);
                 //lastTrigger = "CLOSE";
-            }else {
-                launcher.setPower(0);//power is zero if its not spinning in shooting direction
-            }
-
-            // FAR
-            if (gamepad1.left_trigger > 0) {
+            } else if (gamepad1.left_trigger > 0) {//far
                 launcher.setVelocity(farTargetSpeed);
-                launcher.setPower(1);
+                launchingFar = true;
+               // launcher.setPower(1);
                 //lastTrigger = "FAR";
             } else {
                 launcher.setPower(0);//power is zero if its not spinning in shooting direction
+                launchingFar = false;
             }
+
+
 
             /*if(launcher.getVelocity() >= closeTargetSpeed && launcher.getVelocity() != 0){
                 ColorServo.scaleRange(0.277, 0.5);
@@ -209,7 +210,8 @@ public class OmniTest extends LinearOpMode {
                 ColorServo.setPosition(farTargetSpeed/launcher.getVelocity());
             }*/
 
-            telemetry.addData("velocity: ", launcher.getVelocity());
+            telemetry.addData("velocity", launcher.getVelocity());
+            telemetry.addData("launchingFar: ", launchingFar);
             telemetry.update();
 
             if (gamepad1.right_bumper) {
@@ -219,7 +221,7 @@ public class OmniTest extends LinearOpMode {
             }
 
 
-            launcherIsAtMaxSpeed = (launcherVel <= 1450);//lancher is at max speed when greater than 1450
+            launcherIsAtMaxSpeed = launcherVel <= 1450;
 
         }
     }
