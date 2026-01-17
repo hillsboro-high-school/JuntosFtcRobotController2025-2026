@@ -159,7 +159,7 @@ public class Q3BlueAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 2 * halfTileMat, 2*halfTileMat,90);
+        append(coordinates, 2 * halfTileMat, 0,90);
         //append(coordinates, 4 * halfTileMat, 0,45);
         //append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
 
@@ -173,15 +173,15 @@ public class Q3BlueAuto extends LinearOpMode{
             setTargetTheta(coordinates.get(i).get(2));
 
             // PID Vars
-        /*
-        double p = 1;
-        double i = 0;
-        double d = 1;
+            /*
+            double p = 1;
+            double i = 0;
+            double d = 1;
 
-        double Kp = 1.3;
-        double Ki = 0.2;
-        double Kd = 0.9;
-         */
+            double Kp = 1.3;
+            double Ki = 0.2;
+            double Kd = 0.9;
+             */
 
             //Setting initial errors to seed while loop with good values
             setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
@@ -190,12 +190,9 @@ public class Q3BlueAuto extends LinearOpMode{
             double distErrorThreshold = 0.5; // Inches
             double rotErrorThreshold = 1; // Degrees
 
-            // setDistError(0);
-
             while (getDistError() > distErrorThreshold || Math.abs(getRotError()) > rotErrorThreshold) { //Check for completion condition in translation and rotation
                 //perform distance/angle error calculation
                 setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
-                // setDistError(0);
                 setRotError(getRobotTheta() - getTargetTheta());
 
                 //Perform field vector calculation
@@ -226,7 +223,7 @@ public class Q3BlueAuto extends LinearOpMode{
 
                 normalizePower(); //This function normalizes motor power to avoid any power being >1
 
-                setPowerToZero();  //Set motor powers (setting to zero can help debug, use setPowerToZero fxn)
+                setPower();  //Set motor powers (setting to zero can help debug, use setPowerToZero fxn)
 
                 //Update pinpoint and query robot current position and velocity
                 pinpoint.update();
