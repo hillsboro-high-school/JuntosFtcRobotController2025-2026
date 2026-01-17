@@ -29,12 +29,17 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.text.Spannable;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.Objects;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -72,7 +77,7 @@ public class OmniTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor LeftFront = null;
     private DcMotor LeftBack = null;
-    private DcMotor RightFront = null; 
+    private DcMotor RightFront = null;
     private DcMotor RightBack = null;
 
     private DcMotor intakeMotor = null;
@@ -81,10 +86,14 @@ public class OmniTest extends LinearOpMode {
 
     private DcMotorEx launcher = null;
 
-    private CRServo assistantServo = null;
+
+    private Servo ColorServo = null;
 
     boolean launcherIsAtMaxSpeed = false;
-    double targetSpeed = -1600;
+    double closeTargetSpeed = -1300;
+    double farTargetSpeed = -1450;
+
+    String lastTrigger = "FAR";
 
 
     @Override
@@ -97,11 +106,12 @@ public class OmniTest extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
 
+        //ColorServo = hardwareMap.get(Servo.class, "Color");
+
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
         transfer = hardwareMap.get(DcMotor.class, "transfer");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
 
-        assistantServo = hardwareMap.get(CRServo.class, "assistantServo");
 
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
@@ -122,17 +132,20 @@ public class OmniTest extends LinearOpMode {
             double launcherVel = launcher.getVelocity();
             double max;
 
+            //ColorServo.scaleRange(0.277, 0.666);
+
+
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+            double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = gamepad1.left_stick_x;
+            double yaw = gamepad1.right_stick_x;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double frontLeftPower  = axial + lateral + yaw;
+            double frontLeftPower = axial + lateral + yaw;
             double frontRightPower = axial - lateral - yaw;
-            double backLeftPower   = axial - lateral + yaw;
-            double backRightPower  = axial + lateral - yaw;
+            double backLeftPower = axial - lateral + yaw;
+            double backRightPower = axial + lateral - yaw;
 
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
@@ -141,16 +154,16 @@ public class OmniTest extends LinearOpMode {
             max = Math.max(max, Math.abs(backRightPower));
 
             if (max > 1.0) {
-                frontLeftPower  /= max;
+                frontLeftPower /= max;
                 frontRightPower /= max;
-                backLeftPower   /= max;
-                backRightPower  /= max;
+                backLeftPower /= max;
+                backRightPower /= max;
             }
 
 
             // Send calculated power to wheels
             // Holding A makes the robot move slower so it can park easier
-            if(gamepad1.a) {
+            if (gamepad1.a) {
                 LeftFront.setPower(frontLeftPower / 3);
                 RightFront.setPower(frontRightPower / 3);
                 LeftBack.setPower(backLeftPower / 3);
@@ -164,34 +177,50 @@ public class OmniTest extends LinearOpMode {
 
             //This stuff is for the intake motor
             //this makes the intake motor pull in
-            if(gamepad1.left_trigger > 0){
+            if (gamepad1.left_bumper) {
                 intakeMotor.setPower(-1);
-            }
-            else{
+            } else {
                 intakeMotor.setPower(0);
             }
 
-            if(gamepad1.right_trigger > 0){
-                launcher.setVelocity(targetSpeed);
+            // CLOSE
+            if (gamepad1.right_trigger > 0) {
+                launcher.setVelocity(closeTargetSpeed);
+                launcher.setPower(1);
+                //lastTrigger = "CLOSE";
             }else {
-                launcher.setPower(0);
+                launcher.setPower(0);//power is zero if its not spinning in shooting direction
             }
+
+            // FAR
+            if (gamepad1.left_trigger > 0) {
+                launcher.setVelocity(farTargetSpeed);
+                launcher.setPower(1);
+                //lastTrigger = "FAR";
+            } else {
+                launcher.setPower(0);//power is zero if its not spinning in shooting direction
+            }
+
+            /*if(launcher.getVelocity() >= closeTargetSpeed && launcher.getVelocity() != 0){
+                ColorServo.scaleRange(0.277, 0.5);
+                ColorServo.setPosition(closeTargetSpeed/launcher.getVelocity());
+            }else if(launcher.getVelocity() <= closeTargetSpeed){
+                ColorServo.scaleRange(0.5, 0.666);
+                ColorServo.setPosition(farTargetSpeed/launcher.getVelocity());
+            }*/
 
             telemetry.addData("velocity", launcher.getVelocity());
             telemetry.update();
 
-            if(gamepad1.right_bumper){
+            if (gamepad1.right_bumper) {
                 transfer.setPower(-1);
-            }else{
+            } else {
                 transfer.setPower(0);
             }
 
-            launcherIsAtMaxSpeed = launcherVel <= targetSpeed;
 
-            if(gamepad1.b && launcherIsAtMaxSpeed || gamepad1.start) {
-                assistantServo.setPower(0);
-            }else{
-                assistantServo.setPower(1);
-            }
+            launcherIsAtMaxSpeed = launcherVel <= 1450;
+
         }
-    }}
+    }
+}

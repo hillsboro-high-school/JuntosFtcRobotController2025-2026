@@ -32,7 +32,7 @@ public class Q3BlueAuto extends LinearOpMode{
     private DcMotor BR = null;
 
     // Initial Starting Location of the Robot
-    private double halfTileMat = 12; // Inches
+    private final double halfTileMat = 12; // Inches
     double robotX;
     double robotY;
     double robotTheta;
@@ -57,29 +57,37 @@ public class Q3BlueAuto extends LinearOpMode{
 
     // rotation and translation vars
     double translationVectorAngle;
+    double distError;
     double rotError;  // Rotation Error
     double rotBias; // Const for translation
 
     public double getTranslationVectorAngle(){return translationVectorAngle;}
     public double getRotError(){return rotError;}
     public double getRotBias(){return rotBias;}
+    public double getDistError(){return distError;}
 
-    public void setTranslationVectorAngle(double angle) {
-        translationVectorAngle = (angle-Math.PI/2);
-    }
+
+    public void setTranslationVectorAngle(double angle) {translationVectorAngle = angle;} // Subtracting PI/2 gives unit circle measurements
     public void setRotError(double rotation) {
         rotError = rotation;
     }
     public void setRotBias(double rotationBias){rotBias = rotationBias;}
+    public void setDistError(double distance) {
+        distError = distance;
+    }
+
 
     // Target Vars
     double targetX;
     double targetY;
+    double targetTheta;
 
     public double getTargetX(){return targetX;}
     public double getTargetY(){return targetY;}
+    public double getTargetTheta(){return targetTheta;}
     public void setTargetX(double newTargetX){targetX = newTargetX;}
     public void setTargetY(double newTargetY){targetY = newTargetY;}
+    public void setTargetTheta(double newTheta){targetTheta = newTheta;}
 
     double FL_power;
     double FR_power;
@@ -126,85 +134,133 @@ public class Q3BlueAuto extends LinearOpMode{
 
         // Set starting location at (0,0)
         // X and Y are switched
-        setRobotX(2*halfTileMat);
+        setRobotX(0);
         setRobotY(0);
+        setRobotTheta(0);
 
         // Set the location of the robot - this should be the place you are starting the robot from
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, getRobotX(), getRobotY(), AngleUnit.DEGREES, 0));
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, getRobotX(), getRobotY(), AngleUnit.DEGREES, getRobotTheta()));
 
+        telemetry.addData("robotX", getRobotX());
+        telemetry.addData("robotY", getRobotY());
+        telemetry.addData("robotTheta", getRobotTheta());
+        telemetry.addData("STATUS:", pinpoint.getDeviceStatus());
+        telemetry.update();
+
+        // Wait for user to press run on DS
         waitForStart();
 
+        // Calls main run fxn
         run();
     }
 
     public void run(){
-        // using a local robot x/y for each loop
-        double localRobotX = getRobotX();
-        double localRobotY = getRobotY();
-        double robotVelocity;
 
-        // X and Y are swapped -> EX: (1,0) = (0,1)
-        setTargetX(0);  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
-        setTargetY(2*halfTileMat);
+        // Create a list of all coords you want the robot to move to during auto
+        // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
+        List<List<Double>> coordinates = new ArrayList<List<Double>>();
+        append(coordinates, 4 * halfTileMat, 0,0);
+        append(coordinates, 4 * halfTileMat, 0,45);
+        append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
 
-        //Setting initial errors to seed while loop with good values
-        double distError = Math.sqrt(Math.pow((getTargetX()-getRobotX()), 2) + Math.pow((getTargetY()-getRobotY()), 2));
-        double distErrorThreshold = 0.5; // Inches
-        // Add in rotational error calculation
+        for(int i=0; i<coordinates.size(); i++) {
+            // using a local robot x/y for each loop
+            double robotVelocity = 0; // could make global
 
-        while(distError > distErrorThreshold) { //Check for completion condition in translation and rotation
-            //perform distance/angle error calculation
-            distError = Math.sqrt(Math.pow((getTargetX()-getRobotX()), 2) + Math.pow((getTargetY()-getRobotY()), 2));
+            // X and Y are swapped -> EX: (1,0) = (0,1)
+            setTargetX(coordinates.get(i).get(0));  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
+            setTargetY(coordinates.get(i).get(1));
+            setTargetTheta(coordinates.get(i).get(2));
 
-            //Perform field vector calculation
-            // Test by hard coding angles and seeing which way the robot moves
-            setTranslationVectorAngle(Math.atan2((getTargetX()-getRobotX()), (getTargetY()-getRobotY())));//takes y,x and returns angle in radians
+            // PID Vars
+        /*
+        double p = 1;
+        double i = 0;
+        double d = 1;
 
-            //Calculate Translation and Rotational PID terms
-            //Rolling average controls how much influence the most recent calculation has over the value.
-            // A Small rolling average gives it low influence. Needs to be between 0 and 1
-            //P=Previous P value * (1-P Rolling Ave) + distError * P Rolling Ave
-            //D=Previous D value * (1-D Rolling Ave) + Velocity/distError * D Rolling Ave
-            //I=If Velocity < threshold -> Previous I + 1/abs(velocity)
+        double Kp = 1.3;
+        double Ki = 0.2;
+        double Kd = 0.9;
+         */
 
-            // PID= Pa*P-Da*D+Ia*I
-            // Will need to set bounds to make sure this does not go below a threshold like .3
+            //Setting initial errors to seed while loop with good values
+            setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
+            setRotError(getRobotTheta() - getTargetTheta());
 
-            setRelativePower(1, 1); //This function calculates relative motor powers using filed vector and rotational error
+            double distErrorThreshold = 0.5; // Inches
+            double rotErrorThreshold = 1; // Degrees
 
-            normalizePower(); //This function normalizes motor power to avoid any power being >1
+            // setDistError(0);
 
-            setPower();  //Set motor powers
+            while (getDistError() > distErrorThreshold || Math.abs(getRotError()) > rotErrorThreshold) { //Check for completion condition in translation and rotation
+                //perform distance/angle error calculation
+                setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
+                // setDistError(0);
+                setRotError(getRobotTheta() - getTargetTheta());
 
-            //Update pinpoint and query robot current position and velocity
-            pinpoint.update();
-            Pose2D robotCurPos = pinpoint.getPosition();
-            robotVelocity = pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
+                //Perform field vector calculation
+                // Test by hard coding angles and seeing which way the robot moves
+                setTranslationVectorAngle(((Math.atan2((getRobotY() - getTargetY()), (getTargetX() - getRobotX()))) + Math.toRadians(getRobotTheta()))); //takes y,x and returns angle in radians
+                //getRobot
 
-            //Update robot current position
-            setRobotX(localRobotX + robotCurPos.getX(DistanceUnit.INCH));
-            setRobotY(localRobotY + robotCurPos.getY(DistanceUnit.INCH));
+                //Calculate Translation and Rotational PID terms
+                //Rolling average controls how much influence the most recent calculation has over the value.
+                // A Small rolling average gives it low influence. Needs to be between 0 and 1
 
-            //Output critical values to track robot performance
-            grandTelemetryFunction(distError, robotCurPos, robotVelocity);
+            /* Uncomment once rotation is working theta is changing as the robot moves towards the object
+            double rollingAvgP = 0.9;
+            double rollingAvgD = 0.5;
+            double thresholdI = 0.2;
 
+            double thresholdPID = 0.3;
+
+            p = p * (1-rollingAvgP) + getDistError() * rollingAvgP;
+            d = d * (1-rollingAvgD) + robotVelocity/getDistError() * rollingAvgD;
+            if (robotVelocity < thresholdI){i = i + 1/Math.abs(robotVelocity);}
+
+            double translationPID = Kp*p-Kd*d+Ki*i;
+            if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above 0.3 to avoid zeros
+             */
+
+                setRelativePower(1, 1); //This function calculates relative motor powers using filed vector and rotational error
+
+                normalizePower(); //This function normalizes motor power to avoid any power being >1
+
+                setPower();  //Set motor powers (setting to zero can help debug, use setPowerToZero fxn)
+
+                //Update pinpoint and query robot current position and velocity
+                pinpoint.update();
+                Pose2D robotCurPos = pinpoint.getPosition();
+                robotVelocity = pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
+
+                //Update robot current position
+                setRobotX(robotCurPos.getX(DistanceUnit.INCH));
+                setRobotY(robotCurPos.getY(DistanceUnit.INCH));
+                setRobotTheta(robotCurPos.getHeading(AngleUnit.DEGREES));
+
+                //Output critical values to track robot performance
+                grandTelemetryFunction(getDistError(), robotCurPos, robotVelocity);
+
+            }
+            resetMotorVarPower();
+            setPowerToZero();
         }
-        setPowerToZero();
     }
 
     public void setRelativePower(double translationPID, double rotPID){
         //The fxns with "translationsAngle..." are just get and set angle
         // Math calculations for easier reading
         //double testAngle = 0;
-        double cosVal = (Math.cos(getTranslationVectorAngle())) / Math.sqrt(2);
+        double cosVal = Math.cos(getTranslationVectorAngle()); // Math.sqrt(2));
         double sinVal = Math.sin(getTranslationVectorAngle());
 
         // multiples rotation error, rotation bias, and rotations pid for easier reading
         // setting rot error and bias to zero so it isn't in effect
-        setRotError(0);
-        setRotBias(0); //Needs to be a constant > 0
+
+        setRotBias(0.15); //Needs to be a constant > 0
         double rotationControl = getRotError() * getRotBias() * rotPID; //This calculates final rotational power
 
+        telemetry.addData("Rotation Control", rotationControl);
 
         // Calculates power needed for each motor to get to the relative position
         setFL_power((cosVal - sinVal)*translationPID + rotationControl);
@@ -249,8 +305,8 @@ public class Q3BlueAuto extends LinearOpMode{
          *  The Y pod offset refers to how far forwards from the tracking point the Y (strafe) odometry pod is.
          *  Forward of center is a positive number, backwards is a negative number.
          */
-        pinpoint.setOffsets(-125, 95, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
-        // x = 95        y = -125 - previous
+        pinpoint.setOffsets(-95, 5, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
+
         /*
          * Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
          * the goBILDA_SWINGARM_POD, or the goBILDA_4_BAR_POD.
@@ -279,6 +335,17 @@ public class Q3BlueAuto extends LinearOpMode{
         pinpoint.resetPosAndIMU();
     }
 
+    private List<List<Double>> append(List<List<Double>> start, double data1, double data2, double data3){
+        List<Double> newlistpoint = new ArrayList<Double>();
+
+        newlistpoint.add(data1);
+        newlistpoint.add(data2);
+        newlistpoint.add(data3);
+        start.add(newlistpoint);
+        return start;
+    }
+
+
     // Writes out ALL data onto screen
     public void grandTelemetryFunction(double distError, Pose2D pose2D, double robotVel){
         telemetry.addData("X coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
@@ -288,8 +355,11 @@ public class Q3BlueAuto extends LinearOpMode{
         telemetry.addData("Robot Velocity", robotVel);
         telemetry.addData("TargetX", getTargetX());
         telemetry.addData("TargetY", getTargetY());
+        telemetry.addData("TargetTheta", getTargetTheta());
+        telemetry.addData("rotError", getRotError());
         telemetry.addData("RobotX", getRobotX());
         telemetry.addData("RobotY", getRobotY());
+        telemetry.addData("RobotTheta", getRobotTheta());
         telemetry.addData("Dist error", distError);
         telemetry.addData("Translation angle", Math.toDegrees(getTranslationVectorAngle()));
 
