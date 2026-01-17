@@ -209,7 +209,7 @@ public class OmniTest extends LinearOpMode {
                 ColorServo.setPosition(farTargetSpeed/launcher.getVelocity());
             }*/
 
-            telemetry.addData("velocity", launcher.getVelocity());
+            telemetry.addData("velocity: ", launcher.getVelocity());
             telemetry.update();
 
             if (gamepad1.right_bumper) {
@@ -219,7 +219,7 @@ public class OmniTest extends LinearOpMode {
             }
 
 
-            launcherIsAtMaxSpeed = launcherVel <= 1450;
+            launcherIsAtMaxSpeed = (launcherVel <= 1450);//lancher is at max speed when greater than 1450
 
         }
     }
