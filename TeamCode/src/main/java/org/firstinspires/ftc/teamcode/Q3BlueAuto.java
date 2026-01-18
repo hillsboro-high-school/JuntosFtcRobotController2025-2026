@@ -198,7 +198,7 @@ public class Q3BlueAuto extends LinearOpMode{
                 //Perform field vector calculation
                 // Test by hard coding angles and seeing which way the robot moves
                 double aTanVal = Math.atan2((getTargetY()- getRobotY()), (getTargetX() - getRobotX()));
-                setTranslationVectorAngle(aTanVal + Math.toRadians(getRobotTheta())); //takes y,x and returns angle in radians
+                setTranslationVectorAngle(aTanVal - Math.toRadians(getRobotTheta())); //takes y,x and returns angle in radians
                 //getRobot
 
                 //Calculate Translation and Rotational PID terms
@@ -219,8 +219,14 @@ public class Q3BlueAuto extends LinearOpMode{
                 double translationPID = Kp*p-Kd*d+Ki*i;
                 if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above 0.3 to avoid zeros
                  */
-
-                setRelativePower(1, 1); //This function calculates relative motor powers using filed vector and rotational error
+                double translationCmd;
+                if (getDistError() > distErrorThreshold) {
+                    translationCmd = 1;
+                }
+                else{
+                    translationCmd = 0;
+                }
+                setRelativePower(translationCmd, 1); //This function calculates relative motor powers using filed vector and rotational error
 
                 normalizePower(); //This function normalizes motor power to avoid any power being >1
 
@@ -271,7 +277,7 @@ public class Q3BlueAuto extends LinearOpMode{
         double maxMotorThreshold = 0.5; // 50% motor power
         double maxMotor = Math.abs(Math.max(Math.max(Math.abs(getFR_power()), Math.abs(getFL_power())), Math.max(Math.abs(getBL_power()), Math.abs(getBR_power()))));
         if (maxMotor > maxMotorThreshold){
-            setFL_power(getFL_power() /(maxMotor/maxMotorThreshold));
+            setFL_power(getFL_power() / (maxMotor/maxMotorThreshold));
             setFR_power(getFR_power() / (maxMotor/maxMotorThreshold));
             setBR_power(getBR_power() / (maxMotor/maxMotorThreshold));
             setBL_power(getBL_power() / (maxMotor/maxMotorThreshold));
