@@ -159,7 +159,7 @@ public class Q3BlueAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 0,0,90);
+        append(coordinates, 2*halfTileMat,0,90);
         //append(coordinates, 4 * halfTileMat, 0,45);
         //append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
 
