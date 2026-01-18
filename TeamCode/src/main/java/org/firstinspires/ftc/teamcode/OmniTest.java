@@ -35,7 +35,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorControllerEx;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -90,7 +92,8 @@ public class OmniTest extends LinearOpMode {
     private Servo ColorServo = null;
 
     boolean launcherIsAtMaxSpeed = false;
-    boolean launchingFar = false;
+    boolean hasSpunToFarSpeed = false;
+    double velocity = 0;
     double closeTargetSpeed = -1300;
     double farTargetSpeed = -1450;
 
@@ -113,6 +116,7 @@ public class OmniTest extends LinearOpMode {
         transfer = hardwareMap.get(DcMotor.class, "transfer");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
 
+        launcher.setVelocityPIDFCoefficients(10.0, 0.0, 2.0, 11.5);//P is correction of the motor F is to hold the speed
 
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
@@ -127,7 +131,6 @@ public class OmniTest extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double launcherVel = launcher.getVelocity();
@@ -187,17 +190,30 @@ public class OmniTest extends LinearOpMode {
             // CLOSE
             if (gamepad1.right_trigger > 0) {
                 launcher.setVelocity(closeTargetSpeed);
-                launchingFar = false;
-                //launcher.setPower(1);
-                //lastTrigger = "CLOSE";
-            } else if (gamepad1.left_trigger > 0) {//far
+
+            } else if (gamepad1.left_trigger > 0){//far
+                //launcher.setVelocity(farTargetSpeed);
+                /*if(!hasSpunToFarSpeed) {
+                    while (-launcher.getVelocity() < -farTargetSpeed - 350) {//slowly speed up 10 at a time to reach the target velocity or higher
+                        launcher.setVelocity(velocity);
+                        velocity -= 5;
+                        telemetry.addData("Launcher Velocity: ", launcher.getVelocity());
+                        telemetry.addData("Target Velocity: ", velocity);
+                        telemetry.update();
+                    }
+                    hasSpunToFarSpeed = true;
+                }
                 launcher.setVelocity(farTargetSpeed);
-                launchingFar = true;
-               // launcher.setPower(1);
-                //lastTrigger = "FAR";
-            } else {
+
+                 */
+                launcher.setVelocity(farTargetSpeed);
+
+
+            } else{
+                velocity = 0;
+                hasSpunToFarSpeed = false;
                 launcher.setPower(0);//power is zero if its not spinning in shooting direction
-                launchingFar = false;
+
             }
 
 
@@ -211,7 +227,8 @@ public class OmniTest extends LinearOpMode {
             }*/
 
             telemetry.addData("velocity", launcher.getVelocity());
-            telemetry.addData("launchingFar: ", launchingFar);
+            telemetry.addData("hasSpunToFarSpeed: ", hasSpunToFarSpeed);
+            telemetry.addData("motorPIDF:",launcher.getPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 
             if (gamepad1.right_bumper) {
