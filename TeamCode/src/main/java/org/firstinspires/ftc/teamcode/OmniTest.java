@@ -95,7 +95,7 @@ public class OmniTest extends LinearOpMode {
     boolean hasSpunToFarSpeed = false;
     double velocity = 0;
     double closeTargetSpeed = -1300;
-    double farTargetSpeed = -1450;
+    double farTargetSpeed = -1660;
 
     String lastTrigger = "FAR";
 
@@ -116,7 +116,8 @@ public class OmniTest extends LinearOpMode {
         transfer = hardwareMap.get(DcMotor.class, "transfer");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
 
-        launcher.setVelocityPIDFCoefficients(10.0, 0.0, 2.0, 11.5);//P is correction of the motor F is to hold the speed
+        launcher.setVelocityPIDFCoefficients(28.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
+        //d was 2 before
 
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
