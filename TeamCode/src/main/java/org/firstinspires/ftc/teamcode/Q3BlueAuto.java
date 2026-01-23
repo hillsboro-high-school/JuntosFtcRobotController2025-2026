@@ -30,12 +30,19 @@ public class Q3BlueAuto extends LinearOpMode{
     private DcMotor BL = null;
     private DcMotor FR = null;
     private DcMotor BR = null;
+    private DcMotor INTAKE = null;
+    private DcMotor STORAGE = null;
+    private DcMotor LAUNCHER = null;
+
 
     // Initial Starting Location of the Robot
     private final double halfTileMat = 12; // Inches
     double robotX;
     double robotY;
     double robotTheta;
+    double startX;
+    double startY;
+    double startTheta;
 
     // Robot Getters
     public double getRobotX(){
@@ -45,6 +52,10 @@ public class Q3BlueAuto extends LinearOpMode{
         return robotY;
     }
     public double getRobotTheta(){return robotTheta;}
+    public double getStartX(){return startX;}
+    public double getStartY(){return startY;}
+    public double getStartTheta(){return startTheta;}
+
 
     // Robot Setters
     public void setRobotX(double xCord){
@@ -54,6 +65,11 @@ public class Q3BlueAuto extends LinearOpMode{
         robotY = yCord;
     }
     public void setRobotTheta(double theta){robotTheta = theta;}
+    public void setStartX(double newStartX){startX = newStartX;}
+    public void setStartY(double newStartY){startY = newStartY;}
+    public void setStartTheta(double newStartTheta){startTheta = newStartTheta;}
+
+
 
     // rotation and translation vars
     double translationVectorAngle;
@@ -117,26 +133,36 @@ public class Q3BlueAuto extends LinearOpMode{
     @Override
     // Init function
     public void runOpMode() {
+        // Map Wheel Motors from the driver station
         FL = hardwareMap.get(DcMotor.class, "LeftFront");
         BL = hardwareMap.get(DcMotor.class, "LeftBack");
         FR = hardwareMap.get(DcMotor.class, "RightFront");
         BR = hardwareMap.get(DcMotor.class, "RightBack");
 
+        // Add brakes to each wheel motor
         FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // Map Misc
+        LAUNCHER = hardwareMap.get(DcMotor.class, "launcher");
+
+        // Map pinpoint
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         // Configure the sensor
         configurePinpoint();
 
-        // Set starting location at (0,0)
-        // X and Y are switched
-        setRobotX(0);
-        setRobotY(0);
-        setRobotTheta(0);
+        // Set startX, startY, startTheta to use for reference later
+        setStartX(10 * halfTileMat);
+        setStartY(2 * halfTileMat);
+        setStartTheta(0); // Has to be zero
+
+        // X and Y are switched: (1,0) = (0,1)
+        setRobotX(getStartX());
+        setRobotY(getStartY());
+        setRobotTheta(getStartTheta());
 
         // Set the location of the robot - this should be the place you are starting the robot from
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, getRobotX(), getRobotY(), AngleUnit.DEGREES, getRobotTheta()));
@@ -159,18 +185,24 @@ public class Q3BlueAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 2*halfTileMat,0,90);
-        //append(coordinates, 4 * halfTileMat, 0,45);
-        //append(coordinates, 4 * halfTileMat, -2 * halfTileMat,45);
+        append(coordinates, 7 * halfTileMat,5 * halfTileMat,50);
+        append(coordinates, 7 * halfTileMat, 1.5*halfTileMat,90);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50);
+        append(coordinates, 5 * halfTileMat, 4 * halfTileMat,90);
+        append(coordinates, 5 * halfTileMat, 1.5*halfTileMat,90);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50);
+        append(coordinates, 3 * halfTileMat, 4 * halfTileMat,90);
+        append(coordinates, 3 * halfTileMat, 1.5*halfTileMat,90);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat, 50);
 
-        for(int i=0; i<coordinates.size(); i++) {
+        for(int loop=0; loop<coordinates.size(); loop++) {
             // using a local robot x/y for each loop
             double robotVelocity = 0; // could make global
 
             // X and Y are swapped -> EX: (1,0) = (0,1)
-            setTargetX(coordinates.get(i).get(0));  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
-            setTargetY(coordinates.get(i).get(1));
-            setTargetTheta(coordinates.get(i).get(2));
+            setTargetX(coordinates.get(loop).get(0));  // 2*halfTileMat = One full tile mat. Cord is based on half tile mats to avoid anything weird
+            setTargetY(-coordinates.get(loop).get(1));
+            setTargetTheta(coordinates.get(loop).get(2));
 
             // PID Vars
             /*
@@ -181,11 +213,13 @@ public class Q3BlueAuto extends LinearOpMode{
             double Kp = 1.3;
             double Ki = 0.2;
             double Kd = 0.9;
+
              */
+
 
             //Setting initial errors to seed while loop with good values
             setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
-            setRotError(getTargetTheta()-getRobotTheta());
+            setRotError(getRobotTheta()-getTargetTheta());
 
             double distErrorThreshold = 0.5; // Inches
             double rotErrorThreshold = 1; // Degrees
@@ -193,7 +227,7 @@ public class Q3BlueAuto extends LinearOpMode{
             while (getDistError() > distErrorThreshold || Math.abs(getRotError()) > rotErrorThreshold) { //Check for completion condition in translation and rotation
                 //perform distance/angle error calculation
                 setDistError(Math.sqrt(Math.pow((getTargetX() - getRobotX()), 2) + Math.pow((getTargetY() - getRobotY()), 2)));
-                setRotError(getTargetTheta()-getRobotTheta());
+                setRotError(getRobotTheta()-getTargetTheta());
 
                 //Perform field vector calculation
                 // Test by hard coding angles and seeing which way the robot moves
@@ -205,11 +239,13 @@ public class Q3BlueAuto extends LinearOpMode{
                 //Rolling average controls how much influence the most recent calculation has over the value.
                 // A Small rolling average gives it low influence. Needs to be between 0 and 1
 
-                /* Uncomment once rotation is working theta is changing as the robot moves towards the object
+                // Uncomment once rotation is working theta is changing as the robot moves towards the object
+                /*
                 double rollingAvgP = 0.9;
                 double rollingAvgD = 0.5;
                 double thresholdI = 0.2;
 
+                // Keep the PID above threshold to avoid a zero
                 double thresholdPID = 0.3;
 
                 p = p * (1-rollingAvgP) + getDistError() * rollingAvgP;
@@ -217,16 +253,11 @@ public class Q3BlueAuto extends LinearOpMode{
                 if (robotVelocity < thresholdI){i = i + 1/Math.abs(robotVelocity);}
 
                 double translationPID = Kp*p-Kd*d+Ki*i;
-                if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above 0.3 to avoid zeros
+                if (translationPID < thresholdPID){translationPID = thresholdPID;}  // Keeps the PID above threshold to avoid a zero
+
                  */
-                double translationCmd;
-                if (getDistError() > distErrorThreshold) {
-                    translationCmd = 1;
-                }
-                else{
-                    translationCmd = 0;
-                }
-                setRelativePower(translationCmd, 1); //This function calculates relative motor powers using filed vector and rotational error
+
+                setRelativePower(1, 1); //This function calculates relative motor powers using filed vector and rotational error
 
                 normalizePower(); //This function normalizes motor power to avoid any power being >1
 
@@ -255,13 +286,13 @@ public class Q3BlueAuto extends LinearOpMode{
         //The fxns with "translationsAngle..." are just get and set angle
         // Math calculations for easier reading
         //double testAngle = 0;
-        double cosVal = Math.cos(getTranslationVectorAngle()); // Math.sqrt(2));
+        double cosVal = Math.cos(getTranslationVectorAngle()) / Math.sqrt(2);
         double sinVal = Math.sin(getTranslationVectorAngle());
 
         // multiples rotation error, rotation bias, and rotations pid for easier reading
         // setting rot error and bias to zero so it isn't in effect
 
-        setRotBias(0.15); //Needs to be a constant > 0
+        setRotBias(0.1); //Needs to be a constant > 0
         double rotationControl = getRotError() * getRotBias() * rotPID; //This calculates final rotational power
 
         telemetry.addData("Rotation Control", rotationControl);
@@ -274,7 +305,7 @@ public class Q3BlueAuto extends LinearOpMode{
     }
 
     public void normalizePower(){
-        double maxMotorThreshold = 0.5; // 50% motor power
+        double maxMotorThreshold = 0.75; // 50% motor power
         double maxMotor = Math.abs(Math.max(Math.max(Math.abs(getFR_power()), Math.abs(getFL_power())), Math.max(Math.abs(getBL_power()), Math.abs(getBR_power()))));
         if (maxMotor > maxMotorThreshold){
             setFL_power(getFL_power() / (maxMotor/maxMotorThreshold));
@@ -342,9 +373,9 @@ public class Q3BlueAuto extends LinearOpMode{
     private List<List<Double>> append(List<List<Double>> start, double data1, double data2, double data3){
         List<Double> newlistpoint = new ArrayList<Double>();
 
-        newlistpoint.add(data1);
-        newlistpoint.add(data2);
-        newlistpoint.add(data3);
+        newlistpoint.add(data1-getStartX());
+        newlistpoint.add(data2-getStartY());
+        newlistpoint.add(data3-getStartTheta());
         start.add(newlistpoint);
         return start;
     }
@@ -352,6 +383,10 @@ public class Q3BlueAuto extends LinearOpMode{
 
     // Writes out ALL data onto screen
     public void grandTelemetryFunction(double distError, double aTanVal, Pose2D pose2D, double robotVel){
+        telemetry.addData("Starting X", getStartX());
+        telemetry.addData("Starting Y", getStartY());
+        telemetry.addData("Starting Theta", getStartTheta());
+
         telemetry.addData("X coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
         telemetry.addData("Y coordinate (IN)", pose2D.getY(DistanceUnit.INCH));
         telemetry.addData("Heading angle (DEGREES)", pose2D.getHeading(AngleUnit.DEGREES));
