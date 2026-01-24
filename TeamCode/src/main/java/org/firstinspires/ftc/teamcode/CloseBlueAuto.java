@@ -1,38 +1,31 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.opencv.core.Mat;
 
-@Autonomous(name="Q3BlueAuto", group="Linear OpMode")
+@Autonomous(name="CloseBlueAuto", group="Linear OpMode")
 
-public class Q3BlueAuto extends LinearOpMode{
+public class CloseBlueAuto extends LinearOpMode{
 
     private DcMotor FL = null;
     private DcMotor BL = null;
     private DcMotor FR = null;
     private DcMotor BR = null;
     private DcMotor INTAKE = null;
-    private DcMotor STORAGE = null;
-    private DcMotor LAUNCHER = null;
+    private DcMotor TRANSFER = null;
+    private DcMotorEx LAUNCHER = null;
 
 
     // Initial Starting Location of the Robot
@@ -130,6 +123,9 @@ public class Q3BlueAuto extends LinearOpMode{
     // Pinpoint Defined
     GoBildaPinpointDriver pinpoint;
 
+    double launcherVelocity = -1250;
+
+
     @Override
     // Init function
     public void runOpMode() {
@@ -146,7 +142,13 @@ public class Q3BlueAuto extends LinearOpMode{
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Map Misc
-        LAUNCHER = hardwareMap.get(DcMotor.class, "launcher");
+        LAUNCHER = hardwareMap.get(DcMotorEx.class, "launcher");
+        INTAKE = hardwareMap.get(DcMotor.class, "intakeMotor");
+        TRANSFER = hardwareMap.get(DcMotor.class, "transfer");
+
+        LAUNCHER.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        LAUNCHER.setVelocityPIDFCoefficients(28.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
+
 
         // Map pinpoint
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -178,24 +180,26 @@ public class Q3BlueAuto extends LinearOpMode{
 
         // Calls main run fxn
         run();
+        LAUNCHER.setVelocity(-launcherVelocity);
     }
 
     public void run(){
 
         // Create a list of all coords you want the robot to move to during auto
-        // Data1 = Xcord, Data2 = yCord, Data3 = thetaTarget
+        // shoot -> 1 = YES 0 = NO
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 7 * halfTileMat,5 * halfTileMat,50);
-        append(coordinates, 7 * halfTileMat, 1.5*halfTileMat,90);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50);
-        append(coordinates, 5 * halfTileMat, 4 * halfTileMat,90);
-        append(coordinates, 5 * halfTileMat, 1.5*halfTileMat,90);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50);
-        append(coordinates, 3 * halfTileMat, 4 * halfTileMat,90);
-        append(coordinates, 3 * halfTileMat, 1.5*halfTileMat,90);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat, 50);
+        append(coordinates, 7 * halfTileMat,5 * halfTileMat,50, 1);
+        append(coordinates, 7 * halfTileMat, 1.75*halfTileMat,90, 0);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50, 1);
+        append(coordinates, 5 * halfTileMat, 4 * halfTileMat,90, 0);
+        append(coordinates, 4.5 * halfTileMat, halfTileMat,90, 0);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50, 1);
+        append(coordinates, 3 * halfTileMat, 4 * halfTileMat,90, 0);
+        append(coordinates, 3 * halfTileMat, halfTileMat,90, 0);
+        append(coordinates, 7 * halfTileMat, 5 * halfTileMat, 50, 1);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
+
             // using a local robot x/y for each loop
             double robotVelocity = 0; // could make global
 
@@ -223,6 +227,10 @@ public class Q3BlueAuto extends LinearOpMode{
 
             double distErrorThreshold = 0.5; // Inches
             double rotErrorThreshold = 1; // Degrees
+
+            INTAKE.setPower(-1);
+            LAUNCHER.setVelocity(launcherVelocity);
+
 
             while (getDistError() > distErrorThreshold || Math.abs(getRotError()) > rotErrorThreshold) { //Check for completion condition in translation and rotation
                 //perform distance/angle error calculation
@@ -276,10 +284,21 @@ public class Q3BlueAuto extends LinearOpMode{
                 //Output critical values to track robot performance
                 grandTelemetryFunction(getDistError(), aTanVal, robotCurPos, robotVelocity);
 
+                if(getDistError() < 1){
+                    TRANSFER.setPower(-0.5);
+                }else{
+                    TRANSFER.setPower(0);
+                }
+
             }
             resetMotorVarPower();
             setPowerToZero();
+            shoot(coordinates.get(loop).get(3));
+            TRANSFER.setPower(0);
         }
+        INTAKE.setPower(0);
+        LAUNCHER.setVelocity(-launcherVelocity);
+        LAUNCHER.setPower(0);
     }
 
     public void setRelativePower(double translationPID, double rotPID){
@@ -329,6 +348,24 @@ public class Q3BlueAuto extends LinearOpMode{
         BR.setPower(0);
     }
 
+    public void shoot(double shoot){
+        double endTime = getRuntime() + 5;
+        if (shoot == 1){
+            LAUNCHER.setVelocity(launcherVelocity);
+            while(getRuntime() < endTime) {
+                telemetry.addData("Launcher VEL", LAUNCHER.getVelocity());
+                telemetry.update();
+
+                if (LAUNCHER.getVelocity() <= launcherVelocity) {
+                    TRANSFER.setPower(-1);
+                } else if (LAUNCHER.getVelocity() >= 0.9*launcherVelocity) {
+                    TRANSFER.setPower(0);
+                }
+
+            }
+        }
+    }
+
     // Configure settings for Pinpoint
     public void configurePinpoint(){
         /*
@@ -370,12 +407,13 @@ public class Q3BlueAuto extends LinearOpMode{
         pinpoint.resetPosAndIMU();
     }
 
-    private List<List<Double>> append(List<List<Double>> start, double data1, double data2, double data3){
+    private List<List<Double>> append(List<List<Double>> start, double xCord, double yCord, double theta, double shoot){
         List<Double> newlistpoint = new ArrayList<Double>();
 
-        newlistpoint.add(data1-getStartX());
-        newlistpoint.add(data2-getStartY());
-        newlistpoint.add(data3-getStartTheta());
+        newlistpoint.add(xCord-getStartX());
+        newlistpoint.add(yCord-getStartY());
+        newlistpoint.add(theta);
+        newlistpoint.add(shoot);
         start.add(newlistpoint);
         return start;
     }
@@ -403,10 +441,14 @@ public class Q3BlueAuto extends LinearOpMode{
         telemetry.addData("arcTangent Value", Math.toDegrees(aTanVal));
         telemetry.addData("Translation angle", Math.toDegrees(getTranslationVectorAngle()));
 
+        telemetry.addData("Launcher VEL", LAUNCHER.getVelocity());
+        /*
         telemetry.addData("FR_Power", getFR_power());
         telemetry.addData("FL_Power", getFL_power());
         telemetry.addData("BL_Power", getBL_power());
         telemetry.addData("BR_Power", getBR_power());
+
+         */
         telemetry.update();
     }
 
