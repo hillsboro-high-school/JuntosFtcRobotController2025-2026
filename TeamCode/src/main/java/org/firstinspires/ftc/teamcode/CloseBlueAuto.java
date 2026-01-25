@@ -348,14 +348,14 @@ public class CloseBlueAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 4.5;
+        double endTime = getRuntime() + 5;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {
                 telemetry.addData("Launcher VEL", LAUNCHER.getVelocity());
                 telemetry.update();
 
-                if (LAUNCHER.getVelocity() <= launcherVelocity) {
+                if (LAUNCHER.getVelocity()-10 <= launcherVelocity) {
                     TRANSFER.setPower(-1);
                 } else if (LAUNCHER.getVelocity() >= 0.9*launcherVelocity) {
                     TRANSFER.setPower(0);

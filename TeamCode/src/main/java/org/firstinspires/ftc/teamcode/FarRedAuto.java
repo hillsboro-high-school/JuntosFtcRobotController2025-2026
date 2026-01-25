@@ -123,7 +123,7 @@ public class FarRedAuto extends LinearOpMode{
     // Pinpoint Defined
     GoBildaPinpointDriver pinpoint;
 
-    double launcherVelocity = -1590;  // is -1660 in TeleOp
+    double launcherVelocity = -1580;
 
 
     @Override
@@ -188,12 +188,12 @@ public class FarRedAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // shoot -> 1 = YES 0 = NO
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, halfTileMat,7 * halfTileMat,-25, 1);
+        append(coordinates, halfTileMat,7 * halfTileMat,-23, 1);
         append(coordinates, 3 * halfTileMat, 8 * halfTileMat,-90, 0);
-        append(coordinates, 3 * halfTileMat, 12*halfTileMat,-90, 0);
-        append(coordinates, halfTileMat, 7 * halfTileMat,-25, 1);
-        append(coordinates,  12*halfTileMat, 12*halfTileMat,-90, 0);
-        append(coordinates, halfTileMat, 7 * halfTileMat,-25, 1);
+        append(coordinates, 3 * halfTileMat, 11.25*halfTileMat,-90, 0);
+        append(coordinates, halfTileMat, 7 * halfTileMat,-23, 1);
+        append(coordinates,  0.75*halfTileMat, 11.25*halfTileMat,-90, 0);
+        append(coordinates, halfTileMat, 7 * halfTileMat,-23, 1);
         append(coordinates, 3 * halfTileMat, 8 * halfTileMat,-90, 0);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
@@ -309,7 +309,7 @@ public class FarRedAuto extends LinearOpMode{
         // multiples rotation error, rotation bias, and rotations pid for easier reading
         // setting rot error and bias to zero so it isn't in effect
 
-        setRotBias(0.1); //Needs to be a constant > 0
+        setRotBias(0.05); //Needs to be a constant > 0
         double rotationControl = getRotError() * getRotBias() * rotPID; //This calculates final rotational power
 
         telemetry.addData("Rotation Control", rotationControl);
@@ -347,7 +347,7 @@ public class FarRedAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 5.5;
+        double endTime = getRuntime() + 5;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {

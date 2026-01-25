@@ -110,7 +110,7 @@ public class OmniTest extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
 
-        //ColorServo = hardwareMap.get(Servo.class, "Color");
+        ColorServo = hardwareMap.get(Servo.class, "Color");
 
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
         transfer = hardwareMap.get(DcMotor.class, "transfer");

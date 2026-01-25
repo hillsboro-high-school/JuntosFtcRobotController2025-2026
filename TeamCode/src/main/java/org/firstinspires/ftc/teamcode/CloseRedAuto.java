@@ -189,13 +189,13 @@ public class CloseRedAuto extends LinearOpMode{
         // shoot -> 1 = YES 0 = NO
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
         append(coordinates, 7 * halfTileMat,7 * halfTileMat,-50, 1);
-        append(coordinates, 7 * halfTileMat, 11.75*halfTileMat,-90, 0);
+        append(coordinates, 6.5 * halfTileMat, 10.5*halfTileMat,-90, 0);
         append(coordinates, 7 * halfTileMat, 7 * halfTileMat,-50, 1);
         append(coordinates, 5 * halfTileMat, 8 * halfTileMat,-90, 0);
-        append(coordinates, 5 * halfTileMat, 12*halfTileMat,-90, 0);
+        append(coordinates, 4.5 * halfTileMat, 11*halfTileMat,-90, 0);
         append(coordinates, 7 * halfTileMat, 7 * halfTileMat,-50, 1);
         append(coordinates, 3 * halfTileMat, 8 * halfTileMat,-90, 0);
-        append(coordinates, 3 * halfTileMat, 12*halfTileMat,-90, 0);
+        append(coordinates, 3 * halfTileMat, 11*halfTileMat,-90, 0);
         append(coordinates, 7 * halfTileMat, 7 * halfTileMat, -50, 1);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
@@ -348,14 +348,14 @@ public class CloseRedAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 4.5;
+        double endTime = getRuntime() + 4;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {
                 telemetry.addData("Launcher VEL", LAUNCHER.getVelocity());
                 telemetry.update();
 
-                if (LAUNCHER.getVelocity() <= launcherVelocity) {
+                if (LAUNCHER.getVelocity()-10 <= launcherVelocity) {
                     TRANSFER.setPower(-1);
                 } else if (LAUNCHER.getVelocity() >= 0.9*launcherVelocity) {
                     TRANSFER.setPower(0);

@@ -192,9 +192,9 @@ public class FarBlueAuto extends LinearOpMode{
         append(coordinates, 2.5 * halfTileMat, 4 * halfTileMat,90, 0);
         append(coordinates, 2.5 * halfTileMat, halfTileMat,90, 0);
         append(coordinates, halfTileMat, 5 * halfTileMat,25, 1);
-        append(coordinates,  halfTileMat, halfTileMat,90, 0);
+        append(coordinates,  0.75*halfTileMat, halfTileMat,90, 0);
         append(coordinates, halfTileMat, 5 * halfTileMat,25, 1);
-        append(coordinates, 3 * halfTileMat, 5 * halfTileMat,90, 0);
+        append(coordinates, 3 * halfTileMat, 5 * halfTileMat,0, 0);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
 
@@ -347,7 +347,7 @@ public class FarBlueAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 5.5;
+        double endTime = getRuntime() + 5;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {
