@@ -347,7 +347,7 @@ public class FarBlueAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 6.5;
+        double endTime = getRuntime() + 5.5;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {
