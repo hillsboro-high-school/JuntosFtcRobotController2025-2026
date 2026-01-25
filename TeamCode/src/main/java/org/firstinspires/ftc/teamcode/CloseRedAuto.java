@@ -15,9 +15,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@Autonomous(name="CloseBlueAuto", group="Linear OpMode")
+@Autonomous(name="CloseRedAuto", group="Linear OpMode")
 
-public class CloseBlueAuto extends LinearOpMode{
+public class CloseRedAuto extends LinearOpMode{
 
     private DcMotor FL = null;
     private DcMotor BL = null;
@@ -158,7 +158,7 @@ public class CloseBlueAuto extends LinearOpMode{
 
         // Set startX, startY, startTheta to use for reference later
         setStartX(10 * halfTileMat);
-        setStartY(2 * halfTileMat);
+        setStartY(10 * halfTileMat);
         setStartTheta(0); // Has to be zero
 
         // X and Y are switched: (1,0) = (0,1)
@@ -188,15 +188,15 @@ public class CloseBlueAuto extends LinearOpMode{
         // Create a list of all coords you want the robot to move to during auto
         // shoot -> 1 = YES 0 = NO
         List<List<Double>> coordinates = new ArrayList<List<Double>>();
-        append(coordinates, 7 * halfTileMat,5 * halfTileMat,50, 1);
-        append(coordinates, 7 * halfTileMat, 1.75*halfTileMat,90, 0);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50, 1);
-        append(coordinates, 5 * halfTileMat, 4 * halfTileMat,90, 0);
-        append(coordinates, 4.5 * halfTileMat, halfTileMat,90, 0);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50, 1);
-        append(coordinates, 3 * halfTileMat, 4 * halfTileMat,90, 0);
-        append(coordinates, 3 * halfTileMat, halfTileMat,90, 0);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat, 50, 1);
+        append(coordinates, 7 * halfTileMat,7 * halfTileMat,-50, 1);
+        append(coordinates, 7 * halfTileMat, 11.75*halfTileMat,-90, 0);
+        append(coordinates, 7 * halfTileMat, 7 * halfTileMat,-50, 1);
+        append(coordinates, 5 * halfTileMat, 8 * halfTileMat,-90, 0);
+        append(coordinates, 5 * halfTileMat, 12*halfTileMat,-90, 0);
+        append(coordinates, 7 * halfTileMat, 7 * halfTileMat,-50, 1);
+        append(coordinates, 3 * halfTileMat, 8 * halfTileMat,-90, 0);
+        append(coordinates, 3 * halfTileMat, 12*halfTileMat,-90, 0);
+        append(coordinates, 7 * halfTileMat, 7 * halfTileMat, -50, 1);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
 

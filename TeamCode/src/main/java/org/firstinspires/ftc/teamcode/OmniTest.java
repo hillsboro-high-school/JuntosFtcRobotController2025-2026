@@ -95,7 +95,7 @@ public class OmniTest extends LinearOpMode {
     boolean hasSpunToFarSpeed = false;
     double velocity = 0;
     double closeTargetSpeed = -1300;
-    double farTargetSpeed = -1660;
+    double farTargetSpeed = -1580;
 
     String lastTrigger = "FAR";
 
