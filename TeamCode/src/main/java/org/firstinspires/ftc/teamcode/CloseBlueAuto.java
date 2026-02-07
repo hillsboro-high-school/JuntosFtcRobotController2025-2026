@@ -146,8 +146,10 @@ public class CloseBlueAuto extends LinearOpMode{
         INTAKE = hardwareMap.get(DcMotor.class, "intakeMotor");
         TRANSFER = hardwareMap.get(DcMotor.class, "transfer");
 
+        LAUNCHER.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         LAUNCHER.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LAUNCHER.setVelocityPIDFCoefficients(28.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
+        LAUNCHER.setVelocityPIDFCoefficients(30.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
 
 
         // Map pinpoint
@@ -180,7 +182,7 @@ public class CloseBlueAuto extends LinearOpMode{
 
         // Calls main run fxn
         run();
-        LAUNCHER.setVelocity(-launcherVelocity);
+
     }
 
     public void run(){
@@ -194,9 +196,7 @@ public class CloseBlueAuto extends LinearOpMode{
         append(coordinates, 5 * halfTileMat, 4 * halfTileMat,90, 0);
         append(coordinates, 4.5 * halfTileMat, halfTileMat,90, 0);
         append(coordinates, 7 * halfTileMat, 5 * halfTileMat,50, 1);
-        append(coordinates, 3 * halfTileMat, 4 * halfTileMat,90, 0);
-        append(coordinates, 3 * halfTileMat, halfTileMat,90, 0);
-        append(coordinates, 7 * halfTileMat, 5 * halfTileMat, 50, 1);
+        append(coordinates, 6 * halfTileMat, 4 * halfTileMat,90, 0);
 
         for(int loop=0; loop<coordinates.size(); loop++) {
 
@@ -297,8 +297,19 @@ public class CloseBlueAuto extends LinearOpMode{
             TRANSFER.setPower(0);
         }
         INTAKE.setPower(0);
-        LAUNCHER.setVelocity(-launcherVelocity);
+
+        for(int i = 0; i < 100; i++){
+            sleep(10);
+            if(LAUNCHER.getVelocity() < -100){ //if you want it to stop slowing down sooner increase this number
+                LAUNCHER.setVelocity(2995); //if you want it to slow down faster increase this number
+
+            } else{
+                LAUNCHER.setPower(0);//power is zero if its not spinning in shooting direction
+
+            }
+        }
     }
+
 
     public void setRelativePower(double translationPID, double rotPID){
         //The fxns with "translationsAngle..." are just get and set angle

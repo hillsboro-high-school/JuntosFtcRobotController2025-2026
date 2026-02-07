@@ -147,7 +147,7 @@ public class FarRedAuto extends LinearOpMode{
         TRANSFER = hardwareMap.get(DcMotor.class, "transfer");
 
         LAUNCHER.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LAUNCHER.setVelocityPIDFCoefficients(28.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
+        LAUNCHER.setVelocityPIDFCoefficients(30.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
 
 
         // Map pinpoint

@@ -146,8 +146,10 @@ public class CloseRedAuto extends LinearOpMode{
         INTAKE = hardwareMap.get(DcMotor.class, "intakeMotor");
         TRANSFER = hardwareMap.get(DcMotor.class, "transfer");
 
+        LAUNCHER.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         LAUNCHER.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LAUNCHER.setVelocityPIDFCoefficients(28.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
+        LAUNCHER.setVelocityPIDFCoefficients(30.0, 0, 1.0, 12.0);//P is correction of the motor F is to hold the speed
 
 
         // Map pinpoint
@@ -180,7 +182,7 @@ public class CloseRedAuto extends LinearOpMode{
 
         // Calls main run fxn
         run();
-        LAUNCHER.setVelocity(-launcherVelocity);
+        LAUNCHER.setVelocity(2995);
     }
 
     public void run(){
@@ -297,7 +299,7 @@ public class CloseRedAuto extends LinearOpMode{
             TRANSFER.setPower(0);
         }
         INTAKE.setPower(0);
-        LAUNCHER.setVelocity(-launcherVelocity);
+        LAUNCHER.setVelocity(2995);
     }
 
     public void setRelativePower(double translationPID, double rotPID){

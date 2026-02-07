@@ -95,7 +95,7 @@ public class OmniTest extends LinearOpMode {
     boolean hasSpunToFarSpeed = false;
     double velocity = 0;
     double closeTargetSpeed = -1300;
-    double farTargetSpeed = -1580;
+    double farTargetSpeed = -1560;
 
     String lastTrigger = "FAR";
 
@@ -137,7 +137,6 @@ public class OmniTest extends LinearOpMode {
             double launcherVel = launcher.getVelocity();
             double max;
 
-            //ColorServo.scaleRange(0.277, 0.666);
 
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -193,39 +192,20 @@ public class OmniTest extends LinearOpMode {
                 launcher.setVelocity(closeTargetSpeed);
 
             } else if (gamepad1.left_trigger > 0){//far
-                //launcher.setVelocity(farTargetSpeed);
-                /*if(!hasSpunToFarSpeed) {
-                    while (-launcher.getVelocity() < -farTargetSpeed - 350) {//slowly speed up 10 at a time to reach the target velocity or higher
-                        launcher.setVelocity(velocity);
-                        velocity -= 5;
-                        telemetry.addData("Launcher Velocity: ", launcher.getVelocity());
-                        telemetry.addData("Target Velocity: ", velocity);
-                        telemetry.update();
-                    }
-                    hasSpunToFarSpeed = true;
-                }
+
                 launcher.setVelocity(farTargetSpeed);
 
-                 */
-                launcher.setVelocity(farTargetSpeed);
-
+            } else if(launcher.getVelocity() < -150){ //if you want it to stop slowing down sooner increase this number
+                launcher.setVelocity(2995); //if you want it to slow down faster increase this number
 
             } else{
-                velocity = 0;
-                hasSpunToFarSpeed = false;
                 launcher.setPower(0);//power is zero if its not spinning in shooting direction
 
             }
 
 
 
-            /*if(launcher.getVelocity() >= closeTargetSpeed && launcher.getVelocity() != 0){
-                ColorServo.scaleRange(0.277, 0.5);
-                ColorServo.setPosition(closeTargetSpeed/launcher.getVelocity());
-            }else if(launcher.getVelocity() <= closeTargetSpeed){
-                ColorServo.scaleRange(0.5, 0.666);
-                ColorServo.setPosition(farTargetSpeed/launcher.getVelocity());
-            }*/
+
 
             telemetry.addData("velocity", launcher.getVelocity());
             telemetry.addData("hasSpunToFarSpeed: ", hasSpunToFarSpeed);
