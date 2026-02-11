@@ -123,7 +123,7 @@ public class FarRedAuto extends LinearOpMode{
     // Pinpoint Defined
     GoBildaPinpointDriver pinpoint;
 
-    double launcherVelocity = -1580;
+    double launcherVelocity = -1550;
 
 
     @Override
@@ -347,7 +347,7 @@ public class FarRedAuto extends LinearOpMode{
     }
 
     public void shoot(double shoot){
-        double endTime = getRuntime() + 5;
+        double endTime = getRuntime() + 4;
         if (shoot == 1){
             LAUNCHER.setVelocity(launcherVelocity);
             while(getRuntime() < endTime) {
